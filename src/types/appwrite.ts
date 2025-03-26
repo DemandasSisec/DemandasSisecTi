@@ -13,14 +13,14 @@ export interface User {
 }
 
 export interface Demand {
-    $id?: string;
+    $id: string;
     title: string;
     description: string;
     status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
     priority: 'baixa' | 'media' | 'alta';
     requester_id: string;
     assigned_to: string | null;
-    department: 'desenvolvimento' | 'dados' | 'suporte' | 'infraestrutura' | 'outros';
+    department: string;
     created_at: string;
     updated_at: string;
     due_date: string | null;
@@ -34,7 +34,7 @@ export interface Comment {
     user_id: string;
     content: string;
     created_at: string;
-    type: 'comment' | 'postponement';
+    type: 'comment' | 'system';
 }
 
 export interface Department {

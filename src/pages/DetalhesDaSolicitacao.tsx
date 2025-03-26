@@ -13,7 +13,10 @@ import { Dialog, Transition } from '@headlessui/react'
 import { Fragment } from 'react'
 import { SelectResponsavel } from '../components/SelectResponsavel'
 import { differenceInYears, differenceInMonths, differenceInHours, differenceInMinutes } from 'date-fns';
-import type { Solicitacao, Comentario } from '../types/appwrite'
+import type { Demand, Comment } from '../types/appwrite'
+import { formatDate } from '../utils/formatDate'
+import { PaperClipIcon } from '@heroicons/react/24/outline'
+import { storage } from '../config/appwrite'
 
 interface Adiamento {
   dataAntiga: string
@@ -23,40 +26,49 @@ interface Adiamento {
   data: string
 }
 
+// Adicione esta função para formatar o tamanho do arquivo
+const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
+
 function DetalhesDaSolicitacaoPage() {
   const { id } = useParams<{ id: string }>()
   const { user } = useAuth()
-  const [solicitacao, setSolicitacao] = useState<Solicitacao | null>(null)
-  const [comentarios, setComentarios] = useState<Comentario[]>([])
-  const isAdminOrTI = user?.role === 'adm' || user?.role === 'equipe_ti'
+  const [demand, setDemand] = useState<Demand | null>(null)
+  const [comments, setComments] = useState<Comment[]>([])
+  const isAdminOrTI = user?.role === 'admin' || user?.role === 'admin_ti'
   const navigate = useNavigate()
   const [isEditing, setIsEditing] = useState(false)
-  const [novoComentario, setNovoComentario] = useState('')
+  const [newComment, setNewComment] = useState('')
   const [isAdiamentoModalOpen, setIsAdiamentoModalOpen] = useState(false)
   const [justificativaAdiamento, setJustificativaAdiamento] = useState('')
   const [novaData, setNovaData] = useState('')
   const [userProfile, setUserProfile] = useState<any>(null)
   const [editForm, setEditForm] = useState({
-    solicitante: '',
-    tipo: '',
-    responsavel: '',
-    urgencia: '',
-    descricao: '',
-    status: '',
-    titulo: '',
-    prazo: ''
-  });
+    title: '',
+    description: '',
+    department: '',
+    assigned_to: '',
+    priority: '',
+    status: 'pending',
+    due_date: '',
+    requester_id: ''
+  })
   const [originalForm, setOriginalForm] = useState({
-    solicitante: '',
-    tipo: '',
-    responsavel: '',
-    urgencia: '',
-    descricao: '',
+    title: '',
+    description: '',
+    department: '',
+    assigned_to: '',
+    priority: '',
     status: '',
-    titulo: '',
-    prazo: ''
-  });
+    due_date: ''
+  })
   const [loading, setLoading] = useState(true)
+  const [files, setFiles] = useState<{ id: string; name: string; size: number }[]>([])
 
   // Ajustando a verificação para "Equipe de TI"
   const isEquipeTI = userProfile?.perfil === "Equipe de TI";
@@ -84,16 +96,57 @@ function DetalhesDaSolicitacaoPage() {
     fetchUserProfile();
   }, [user]);
 
-  const fetchSolicitacao = async () => {
+  const fetchFiles = async (fileIds: string[]) => {
+    if (!fileIds?.length) return
+
+    try {
+      const filesInfo = await Promise.all(
+        fileIds.map(async (fileId) => {
+          try {
+            const file = await storage.getFile(
+              APPWRITE_CONFIG.storage.DEMANDS_FILES,
+              fileId
+            )
+            return {
+              id: fileId,
+              name: file.name,
+              size: file.size
+            }
+          } catch (error) {
+            console.error('Erro ao buscar arquivo:', error)
+            return null
+          }
+        })
+      )
+      setFiles(filesInfo.filter((file): file is { id: string; name: string; size: number } => file !== null))
+    } catch (error) {
+      console.error('Erro ao buscar arquivos:', error)
+    }
+  }
+
+  const fetchDemand = async () => {
     if (!id) return
 
     try {
-      const response = await databases.getDocument(
+      const response = await databases.getDocument<Demand>(
         APPWRITE_CONFIG.databaseId,
         APPWRITE_CONFIG.collections.DEMANDS,
         id
       )
-      setSolicitacao(response as Solicitacao)
+      setDemand(response)
+      if (response.arquivos?.length) {
+        await fetchFiles(response.arquivos)
+      }
+      setEditForm({
+        title: response.title,
+        description: response.description,
+        department: response.department,
+        assigned_to: response.assigned_to || '',
+        priority: response.priority,
+        status: response.status,
+        due_date: response.due_date || '',
+        requester_id: response.requester_id || ''
+      })
     } catch (error) {
       console.error('Erro ao buscar solicitação:', error)
       toast.error('Erro ao carregar solicitação')
@@ -102,7 +155,7 @@ function DetalhesDaSolicitacaoPage() {
     }
   }
 
-  const fetchComentarios = async () => {
+  const fetchComments = async () => {
     if (!id) return
 
     try {
@@ -114,7 +167,7 @@ function DetalhesDaSolicitacaoPage() {
           Query.orderDesc('created_at')
         ]
       )
-      setComentarios(response.documents as Comentario[])
+      setComments(response.documents as Comment[])
     } catch (error) {
       console.error('Erro ao buscar comentários:', error)
       toast.error('Erro ao carregar comentários')
@@ -122,29 +175,29 @@ function DetalhesDaSolicitacaoPage() {
   }
 
   useEffect(() => {
-    fetchSolicitacao()
-    fetchComentarios()
+    fetchDemand()
+    fetchComments()
   }, [id])
 
-  const handleAddComentario = async () => {
-    if (!novoComentario.trim()) return
+  const handleAddComment = async () => {
+    if (!newComment.trim() || !user) return
 
     try {
-      await databases.createDocument(
+      const comment = await databases.createDocument(
         APPWRITE_CONFIG.databaseId,
         APPWRITE_CONFIG.collections.COMMENTS,
         ID.unique(),
         {
           demand_id: id,
-          user_id: user?.$id,
-          content: novoComentario,
+          user_id: user.$id,
+          content: newComment.trim(),
           created_at: new Date().toISOString(),
           type: 'comment'
         }
       )
 
-      setNovoComentario('')
-      fetchComentarios()
+      setComments(prev => [comment as Comment, ...prev])
+      setNewComment('')
       toast.success('Comentário adicionado com sucesso!')
     } catch (error) {
       console.error('Erro ao adicionar comentário:', error)
@@ -152,15 +205,15 @@ function DetalhesDaSolicitacaoPage() {
     }
   }
 
-  const handleDeleteComentario = async (comentarioId: string) => {
+  const handleDeleteComment = async (commentId: string) => {
     try {
       await databases.deleteDocument(
         APPWRITE_CONFIG.databaseId,
         APPWRITE_CONFIG.collections.COMMENTS,
-        comentarioId
+        commentId
       );
       
-      await fetchComentarios();
+      await fetchComments();
       toast.success('Comentário removido com sucesso!');
     } catch (error) {
       console.error('Erro ao deletar comentário:', error);
@@ -180,9 +233,9 @@ function DetalhesDaSolicitacaoPage() {
         APPWRITE_CONFIG.collections.DEMANDS,
         id,
         {
-          prazo: novaData,
+          due_date: novaData,
           adiamentos: {
-            dataAntiga: solicitacao?.prazo,
+            dataAntiga: demand?.due_date,
             dataNova: novaData,
             justificativa: justificativaAdiamento,
             solicitante: user?.name,
@@ -208,52 +261,13 @@ function DetalhesDaSolicitacaoPage() {
       setJustificativaAdiamento('');
       setNovaData('');
       
-      await fetchSolicitacao();
-      await fetchComentarios();
+      await fetchDemand();
+      await fetchComments();
 
       toast.success('Solicitação adiada com sucesso!');
     } catch (error) {
       console.error('Erro ao adiar solicitação:', error);
       toast.error('Erro ao adiar solicitação. Tente novamente.');
-    }
-  };
-
-  const formatarData = (data: any) => {
-    if (!data) return 'Não definido';
-    
-    try {
-      // Se for um Timestamp do Firestore
-      if (data && typeof data === 'object' && 'seconds' in data) {
-        const date = new Date(data.seconds * 1000);
-        return date.toLocaleDateString('pt-BR', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric'
-        });
-      }
-      
-      // Se for uma string de data no formato YYYY-MM-DD
-      if (typeof data === 'string') {
-        if (data.includes('-')) {
-          const [ano, mes, dia] = data.split('-');
-          return `${dia}/${mes}/${ano}`;
-        }
-        
-        // Se for uma string ISO
-        const date = new Date(data);
-        if (!isNaN(date.getTime())) {
-          return date.toLocaleDateString('pt-BR', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-          });
-        }
-      }
-      
-      return 'Data inválida';
-    } catch (error) {
-      console.error('Erro ao formatar data:', error);
-      return 'Data inválida';
     }
   };
 
@@ -309,26 +323,26 @@ function DetalhesDaSolicitacaoPage() {
   };
 
   useEffect(() => {
-    if (solicitacao?.status === 'suspenso' && solicitacao?.dataSuspensao) {
+    if (demand?.status === 'suspenso' && demand?.dataSuspensao) {
       const interval = setInterval(() => {
         // Força uma re-renderização para atualizar o tempo
-        setSolicitacao(prev => ({ ...prev }));
+        setDemand(prev => ({ ...prev }));
       }, 60000); // Atualiza a cada minuto
 
       return () => clearInterval(interval);
     }
-  }, [solicitacao?.status, solicitacao?.dataSuspensao]);
+  }, [demand?.status, demand?.dataSuspensao]);
 
   const handleEdit = () => {
     const originalValues = {
-      solicitante: solicitacao?.solicitante || '',
-      tipo: solicitacao?.tipo || '',
-      responsavel: solicitacao?.responsavel || '',
-      urgencia: solicitacao?.urgencia || '',
-      descricao: solicitacao?.descricao || '',
-      status: solicitacao?.status || '',
-      titulo: solicitacao?.titulo || '',
-      prazo: solicitacao?.prazo || ''
+      title: demand?.title || '',
+      description: demand?.description || '',
+      department: demand?.department || '',
+      assigned_to: demand?.assigned_to || '',
+      priority: demand?.priority || '',
+      status: demand?.status || '',
+      due_date: demand?.due_date || '',
+      requester_id: demand?.requester_id || ''
     };
     
     setOriginalForm(originalValues);
@@ -342,7 +356,7 @@ function DetalhesDaSolicitacaoPage() {
   };
 
   const calcularTempoSuspensao = (dataSuspensao: any) => {
-    if (!dataSuspensao || solicitacao?.status !== 'suspenso') return null;
+    if (!dataSuspensao || demand?.status !== 'suspenso') return null;
   
     try {
       const suspensaoDate = new Date(dataSuspensao.seconds * 1000);
@@ -375,56 +389,42 @@ function DetalhesDaSolicitacaoPage() {
   
     } catch (error) {
       console.error('Erro ao calcular tempo de suspensão:', error, {
-        demandaId: solicitacao?.id,
-        dataSuspensao: solicitacao?.dataSuspensao,
-        status: solicitacao?.status
+        demandaId: demand?.id,
+        dataSuspensao: demand?.dataSuspensao,
+        status: demand?.status
       });
       return 'Tempo indisponível';
     }
   };
 
   const handleSave = async () => {
-    if (!solicitacao?.$id) return;
+    if (!demand?.$id) return;
 
     try {
       await databases.updateDocument(
         APPWRITE_CONFIG.databaseId,
         APPWRITE_CONFIG.collections.DEMANDS,
-        solicitacao.$id,
-        {
-          solicitante: editForm.solicitante,
-          tipo: editForm.tipo,
-          responsavel: editForm.responsavel,
-          urgencia: editForm.urgencia,
-          descricao: editForm.descricao,
-          status: editForm.status,
-          titulo: editForm.titulo,
-          prazo: editForm.prazo || null
-        }
-      );
+        demand.$id,
+        editForm
+      )
 
-      // Atualiza o estado local
-      setSolicitacao({
-        ...solicitacao,
-        ...editForm
-      });
-
-      setIsEditing(false);
-      toast.success('Solicitação atualizada com sucesso!');
+      setDemand(prev => prev ? { ...prev, ...editForm } : null)
+      setIsEditing(false)
+      toast.success('Solicitação atualizada com sucesso!')
     } catch (error) {
-      console.error('Erro ao atualizar solicitação:', error);
-      toast.error('Erro ao atualizar solicitação');
+      console.error('Erro ao atualizar solicitação:', error)
+      toast.error('Erro ao atualizar solicitação')
     }
   };
 
   const handleComplete = async () => {
-    if (!solicitacao?.$id) return;
+    if (!demand?.$id) return;
 
     try {
       await databases.updateDocument(
         APPWRITE_CONFIG.databaseId,
         APPWRITE_CONFIG.collections.DEMANDS,
-        solicitacao.$id,
+        demand.$id,
         {
           status: 'concluida',
           dataFinalizacao: new Date().toISOString()
@@ -436,7 +436,7 @@ function DetalhesDaSolicitacaoPage() {
         APPWRITE_CONFIG.collections.COMMENTS,
         ID.unique(),
         {
-          demand_id: solicitacao.$id,
+          demand_id: demand.$id,
           texto: `Demanda finalizada pelo usuário: ${user?.name}`,
           autor: user?.name,
           data: new Date().toISOString(),
@@ -446,8 +446,8 @@ function DetalhesDaSolicitacaoPage() {
 
       toast.success('Demanda concluída com sucesso!');
       
-      await fetchSolicitacao();
-      await fetchComentarios();
+      await fetchDemand();
+      await fetchComments();
     } catch (error) {
       console.error('Erro ao concluir demanda:', error);
       toast.error('Erro ao concluir demanda. Tente novamente.');
@@ -455,13 +455,13 @@ function DetalhesDaSolicitacaoPage() {
   };
 
   const handleReopen = async () => {
-    if (!solicitacao?.$id) return;
+    if (!demand?.$id) return;
 
     try {
       await databases.updateDocument(
         APPWRITE_CONFIG.databaseId,
         APPWRITE_CONFIG.collections.DEMANDS,
-        solicitacao.$id,
+        demand.$id,
         {
           status: 'em_andamento'
         }
@@ -472,7 +472,7 @@ function DetalhesDaSolicitacaoPage() {
         APPWRITE_CONFIG.collections.COMMENTS,
         ID.unique(),
         {
-          demand_id: solicitacao.$id,
+          demand_id: demand.$id,
           texto: `Demanda reaberta pelo usuário: ${user?.name}`,
           autor: user?.name,
           data: new Date().toISOString(),
@@ -482,8 +482,8 @@ function DetalhesDaSolicitacaoPage() {
 
       toast.success('Demanda reaberta com sucesso!');
       
-      await fetchSolicitacao();
-      await fetchComentarios();
+      await fetchDemand();
+      await fetchComments();
     } catch (error) {
       console.error('Erro ao reabrir demanda:', error);
       toast.error('Erro ao reabrir demanda. Tente novamente.');
@@ -514,13 +514,57 @@ function DetalhesDaSolicitacaoPage() {
     return titulo
   }
 
+  const translateStatus = (status: string): string => {
+    const statusMap: Record<string, string> = {
+      'pending': 'pendente',
+      'in_progress': 'em_andamento',
+      'completed': 'concluida',
+      'cancelled': 'cancelado'
+    };
+    return statusMap[status] || status;
+  };
+
+  const formatDepartment = (department: string): string => {
+    const departmentMap: Record<string, string> = {
+      'desenvolvimento': 'Desenvolvimento',
+      'dados': 'Dados',
+      'suporte': 'Suporte',
+      'infraestrutura': 'Infraestrutura',
+      'outros': 'Outros'
+    };
+    return departmentMap[department] || department;
+  };
+
+  // Função para fazer download do arquivo
+  const handleDownload = async (fileId: string, fileName: string) => {
+    try {
+      const result = await storage.getFileDownload(
+        APPWRITE_CONFIG.storage.DEMANDS_FILES,
+        fileId
+      )
+      
+      // Criar um link temporário para download
+      const url = window.URL.createObjectURL(result)
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', fileName)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Erro ao baixar arquivo:', error)
+      toast.error('Erro ao baixar o arquivo')
+    }
+  }
+
   return (
     <div className="p-8">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold text-blue-500">
-            Detalhes da Solicitação - Nº {solicitacao?.$id}
+            Detalhes da Solicitação - Nº {demand?.$id}
           </h1>
           <p className="text-sm text-gray-500 mt-1">
             Visualize e gerencie os detalhes desta solicitação
@@ -535,7 +579,7 @@ function DetalhesDaSolicitacaoPage() {
         </button>
       </div>
 
-      {solicitacao ? (
+      {demand ? (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200">
           {/* Cabeçalho da solicitação */}
           <div className="p-6 border-b border-gray-200">
@@ -544,20 +588,20 @@ function DetalhesDaSolicitacaoPage() {
                 {isEditing ? (
                   <input
                     type="text"
-                    value={editForm.titulo}
-                    onChange={(e) => setEditForm(prev => ({ ...prev, titulo: e.target.value }))}
+                    value={editForm.title}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, title: e.target.value }))}
                     className="w-full text-xl font-semibold text-gray-900 mb-3 p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Título da solicitação"
                   />
                 ) : (
                   <h2 className="text-xl font-semibold text-gray-900 mb-3 whitespace-pre-wrap break-words">
-                    {solicitacao.titulo}
+                    {demand.title}
                   </h2>
                 )}
               </div>
               
               <div className="flex space-x-3 shrink-0">
-                {solicitacao?.status === 'concluida' && isAdminOrTI && (
+                {demand?.status === 'concluida' && isAdminOrTI && (
                   <button
                     onClick={handleReopen}
                     className="px-4 py-2 text-white bg-gradient-to-r from-blue-400 to-cyan-500 rounded-lg transition-all duration-200 hover:from-blue-500 hover:to-cyan-600 font-medium"
@@ -565,7 +609,7 @@ function DetalhesDaSolicitacaoPage() {
                     Reabrir Demanda
                   </button>
                 )}
-                {solicitacao?.status !== 'concluida' && isAdminOrTI && (
+                {demand?.status !== 'concluida' && isAdminOrTI && (
                   <>
                     <div className="flex space-x-3 shrink-0">
                       {isEditing ? (
@@ -623,25 +667,25 @@ function DetalhesDaSolicitacaoPage() {
                   <div className="text-gray-700 whitespace-pre-wrap break-words">
                     {isEditing ? (
                       <textarea
-                        value={editForm.descricao}
-                        onChange={(e) => setEditForm(prev => ({ ...prev, descricao: e.target.value }))}
+                        value={editForm.description}
+                        onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
                         rows={3}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                       />
                     ) : (
-                      <p className="text-gray-700 whitespace-pre-wrap">{solicitacao.descricao}</p>
+                      <p className="text-gray-700 whitespace-pre-wrap">{demand.description}</p>
                     )}
                   </div>
-                  {solicitacao.link && (
+                  {demand.link && (
                     <div className="mt-4">
                       <p className="text-sm font-medium text-gray-500 mb-1">Link:</p>
                       <a 
-                        href={solicitacao.link} 
+                        href={demand.link} 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="text-blue-600 hover:text-blue-800 break-all"
                       >
-                        {solicitacao.link}
+                        {demand.link}
                       </a>
                     </div>
                   )}
@@ -649,7 +693,7 @@ function DetalhesDaSolicitacaoPage() {
               </div>
 
               {/* Seção de Comentários */}
-              {solicitacao?.status !== 'concluida' && (
+              {demand?.status !== 'concluida' && (
                 <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg p-4 border border-gray-200">
                   <div className="mb-4">
                     <h3 className="text-sm font-medium text-gray-500">Comentários</h3>
@@ -658,15 +702,15 @@ function DetalhesDaSolicitacaoPage() {
                   {/* Formulário para novo comentário */}
                   <div className="mb-6">
                     <textarea
-                      value={novoComentario}
-                      onChange={(e) => setNovoComentario(e.target.value)}
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
                       placeholder="Adicione um comentário..."
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                       rows={3}
                     />
                     <div className="mt-2 flex justify-end">
                       <button
-                        onClick={handleAddComentario}
+                        onClick={handleAddComment}
                         className="px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                       >
                         Adicionar Comentário
@@ -678,25 +722,25 @@ function DetalhesDaSolicitacaoPage() {
 
               {/* Lista de comentários */}
               <div className="space-y-4 mt-4">
-                {comentarios.map((comentario) => (
-                  <div key={comentario.$id} className="bg-white p-4 rounded-lg border border-gray-200">
+                {comments.map((comment) => (
+                  <div key={comment.$id} className="bg-white p-4 rounded-lg border border-gray-200">
                     <div className="flex justify-between items-start mb-2">
                       <div className="flex items-center space-x-2">
-                        <span className="font-medium text-gray-900">{comentario.autor}</span>
+                        <span className="font-medium text-gray-900">{comment.autor}</span>
                         <span className="text-sm text-gray-500">
-                          {formatarDataComentario(comentario.data)}
+                          {formatarDataComentario(comment.created_at)}
                         </span>
                       </div>
-                      {isAdminOrTI && solicitacao?.status !== 'concluida' && (
+                      {isAdminOrTI && demand?.status !== 'concluida' && (
                         <button
-                          onClick={() => handleDeleteComentario(comentario.$id)}
+                          onClick={() => handleDeleteComment(comment.$id)}
                           className="text-gray-400 hover:text-red-500 transition-colors"
                         >
                           <TrashIcon className="h-4 w-4" />
                         </button>
                       )}
                     </div>
-                    <p className="text-gray-700 whitespace-pre-wrap">{comentario.texto}</p>
+                    <p className="text-gray-700 whitespace-pre-wrap">{comment.content}</p>
                   </div>
                 ))}
               </div>
@@ -715,23 +759,23 @@ function DetalhesDaSolicitacaoPage() {
                         onChange={(e) => setEditForm(prev => ({ ...prev, status: e.target.value }))}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                       >
-                        <option value="pendente">Pendente</option>
-                        <option value="em_andamento">Em Andamento</option>
-                        <option value="concluida">Concluída</option>
-                        <option value="suspenso">Suspenso</option>
+                        <option value="pending">Pendente</option>
+                        <option value="in_progress">Em Andamento</option>
+                        <option value="completed">Concluída</option>
+                        <option value="cancelled">Cancelada</option>
                       </select>
                     ) : (
                       <div className="mt-1">
-                        <StatusBadge status={solicitacao.status} />
+                        <StatusBadge status={translateStatus(demand.status)} />
                       </div>
                     )}
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Urgência</p>
+                    <p className="text-sm text-gray-500">Prioridade</p>
                     {isEditing ? (
                       <select
-                        value={editForm.urgencia}
-                        onChange={(e) => setEditForm(prev => ({ ...prev, urgencia: e.target.value }))}
+                        value={editForm.priority}
+                        onChange={(e) => setEditForm(prev => ({ ...prev, priority: e.target.value }))}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                       >
                         <option value="baixa">Baixa</option>
@@ -739,15 +783,15 @@ function DetalhesDaSolicitacaoPage() {
                         <option value="alta">Alta</option>
                       </select>
                     ) : (
-                      <UrgenciaBadge urgencia={solicitacao.urgencia} />
+                      <p className="text-gray-700 font-medium capitalize">{demand.priority}</p>
                     )}
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Tipo</p>
                     {isEditing ? (
                       <select
-                        value={editForm.tipo}
-                        onChange={(e) => setEditForm(prev => ({ ...prev, tipo: e.target.value }))}
+                        value={editForm.department}
+                        onChange={(e) => setEditForm(prev => ({ ...prev, department: e.target.value }))}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                       >
                         <option value="desenvolvimento">Desenvolvimento</option>
@@ -757,14 +801,16 @@ function DetalhesDaSolicitacaoPage() {
                         <option value="outros">Outros</option>
                       </select>
                     ) : (
-                      <p className="text-gray-700 font-medium">
-                        {formatarTipo(solicitacao.tipo)}
+                      <p className="text-gray-700 font-medium capitalize">
+                        {formatDepartment(demand.department)}
                       </p>
                     )}
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Criado em</p>
-                    <p className="text-gray-700 font-medium">{formatarDataCriacao(solicitacao.createdAt)}</p>
+                    <p className="text-gray-700 font-medium">
+                      {formatDate(demand.created_at)}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Prazo</p>
@@ -772,34 +818,14 @@ function DetalhesDaSolicitacaoPage() {
                       <div className="space-y-2">
                         <input
                           type="date"
-                          value={editForm.prazo || ''}
-                          onChange={(e) => {
-                            const novoForm = { ...editForm }
-                            novoForm.prazo = e.target.value
-                            setEditForm(novoForm)
-                          }}
+                          value={editForm.due_date || ''}
+                          onChange={(e) => setEditForm(prev => ({ ...prev, due_date: e.target.value }))}
                           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                         />
-                        <div className="flex items-center">
-                          <input
-                            type="checkbox"
-                            id="sem-prazo"
-                            checked={!editForm.prazo}
-                            onChange={(e) => {
-                              const novoForm = { ...editForm }
-                              novoForm.prazo = e.target.checked ? '' : new Date().toISOString().split('T')[0]
-                              setEditForm(novoForm)
-                            }}
-                            className="mr-2"
-                          />
-                          <label htmlFor="sem-prazo" className="text-sm text-gray-600">
-                            Demanda sem prazo
-                          </label>
-                        </div>
                       </div>
                     ) : (
                       <p className="text-gray-700 font-medium">
-                        {solicitacao.prazo ? formatarData(solicitacao.prazo) : 'Não definido'}
+                        {formatDate(demand.due_date)}
                       </p>
                     )}
                   </div>
@@ -807,38 +833,62 @@ function DetalhesDaSolicitacaoPage() {
                     <p className="text-sm text-gray-500">Responsável</p>
                     {isEditing ? (
                       <SelectResponsavel
-                        value={editForm.responsavel}
-                        onChange={(value) => setEditForm(prev => ({ ...prev, responsavel: value }))}
+                        value={editForm.assigned_to}
+                        onChange={(value) => setEditForm(prev => ({ ...prev, assigned_to: value }))}
                       />
                     ) : (
-                      <p className="text-gray-700 font-medium">{solicitacao.responsavel || 'Não atribuído'}</p>
+                      <p className="text-gray-700 font-medium">
+                        {demand.assigned_to || 'Não atribuído'}
+                      </p>
                     )}
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Solicitante</p>
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={editForm.solicitante}
-                        onChange={(e) => setEditForm(prev => ({ ...prev, solicitante: e.target.value }))}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                      />
-                    ) : (
-                      <p className="text-gray-700 font-medium">{solicitacao.solicitante || 'Não definido'}</p>
-                    )}
+                    <p className="text-gray-700 font-medium">
+                      {demand.requester_id || 'Não definido'}
+                    </p>
                   </div>
-                  {solicitacao.status === 'suspenso' && solicitacao.dataSuspensao && (
+                  {demand.status === 'suspenso' && demand.dataSuspensao && (
                     <div>
                       <p className="text-sm text-gray-500">Tempo em Suspensão</p>
                       <div className="mt-1">
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                          {calcularTempoSuspensao(solicitacao.dataSuspensao)}
+                          {calcularTempoSuspensao(demand.dataSuspensao)}
                         </span>
                       </div>
                     </div>
                   )}
                 </div>
               </div>
+
+              {/* Seção de Arquivos */}
+              {demand.arquivos && demand.arquivos.length > 0 && (
+                <div>
+                  <p className="text-sm text-gray-500">Arquivos Anexados</p>
+                  <div className="mt-2 space-y-2">
+                    {files.map((file) => (
+                      <div
+                        key={file.id}
+                        className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200"
+                      >
+                        <div className="flex items-center space-x-3">
+                          <PaperClipIcon className="h-5 w-5 text-gray-400" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-700">{file.name}</p>
+                            <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleDownload(file.id, file.name)}
+                          className="px-3 py-1 text-sm text-blue-600 hover:text-blue-800 font-medium"
+                        >
+                          Baixar
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
