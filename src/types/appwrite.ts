@@ -13,19 +13,19 @@ export interface User {
 }
 
 export interface Demand {
-    $id: string;
-    titulo: string;
-    descricao: string;
-    tipo: string;
-    urgencia: string;
-    status: string;
-    prazo: string;
-    responsavel: string;
-    solicitante: string;
+    $id?: string;
+    title: string;
+    description: string;
+    status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+    priority: 'baixa' | 'media' | 'alta';
+    requester_id: string;
+    assigned_to: string | null;
+    department: 'desenvolvimento' | 'dados' | 'suporte' | 'infraestrutura' | 'outros';
     created_at: string;
-    link?: string;
-    dataSuspensao?: string;
-    dataFinalizacao?: string;
+    updated_at: string;
+    due_date: string | null;
+    attachments: string;
+    arquivos: string[];
 }
 
 export interface Comment {

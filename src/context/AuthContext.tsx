@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect } from 'react'
 import { account, databases } from '../config/appwrite'
 import { APPWRITE_CONFIG } from '../config/appwrite'
 import type { User } from '../types/appwrite'
+import { AppwriteException } from 'appwrite'
 
 interface AuthContextType {
   user: User | null
@@ -28,7 +29,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       try {
-        // Tenta buscar o documento primeiro
+        // Tenta buscar o documento do usuário
         const userData = await databases.getDocument(
           APPWRITE_CONFIG.databaseId,
           APPWRITE_CONFIG.collections.USERS,
@@ -45,9 +46,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           updated_at: userData.updated_at
         })
         setUserType(userData.role)
-      } catch (error: any) {
+      } catch (error) {
         // Se o documento não existe (404), cria um novo
-        if (error?.code === 404) {
+        if (error instanceof AppwriteException && error.code === 404) {
           const userData = await databases.createDocument(
             APPWRITE_CONFIG.databaseId,
             APPWRITE_CONFIG.collections.USERS,
@@ -55,8 +56,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             {
               name: session.name,
               email: session.email,
-              role: 'admin',
-              department: 'TI',
+              role: 'user', // Começa como usuário comum
+              department: 'Não definido',
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString()
             }
@@ -88,10 +89,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function login(email: string, password: string) {
     setLoading(true)
     try {
-      // Primeiro, tenta fazer logout se houver uma sessão ativa
+      // Tenta fazer logout se houver uma sessão ativa
       try {
         await account.deleteSession('current')
-      } catch (error) {
+      } catch {
         // Ignora erro se não houver sessão
       }
 
@@ -102,6 +103,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await checkUser()
     } catch (error) {
       console.error('Erro no login:', error)
+      setLoading(false)
       throw error
     }
   }
