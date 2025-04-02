@@ -16,6 +16,7 @@ import { SmallLoadingProvider } from './context/SmallLoadingContext'
 import { AuthProvider } from './contexts/AuthContext'
 import SolicitacaoVagas from './pages/SolicitacaoVagas'
 import ListaSolicitacoesVagas from './pages/ListaSolicitacoesVagas'
+import DetalhamentoDemanda from './pages/DetalhamentoDemanda'
 
 function App() {
   return (
@@ -63,6 +64,10 @@ function App() {
                                 <ListaSolicitacoesVagas />
                               </ProtectedRoute>
                             } 
+                          />
+                          <Route 
+                            path="/detalhes-solicitacao-vaga/:id" 
+                            element={<DetalhamentoDemanda />} 
                           />
                         </Routes>
                       </AppLayout>

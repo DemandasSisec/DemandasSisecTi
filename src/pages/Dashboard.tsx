@@ -5,7 +5,7 @@ import { APPWRITE_CONFIG } from '../config/appwrite'
 import { Query } from 'appwrite'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import type { Solicitacao } from '../types/appwrite'
+import type { Solicitacao, SolicitacaoVaga } from '../types/appwrite'
 import {
   ChartBarIcon,
   ClipboardDocumentListIcon,
@@ -48,6 +48,13 @@ export default function Dashboard() {
   const [demandasPorResponsavel, setDemandasPorResponsavel] = useState<DemandaPorResponsavel[]>([])
   const [demandasPorMes, setDemandasPorMes] = useState<DemandaPorMes[]>([])
   const [demandasPorTipo, setDemandasPorTipo] = useState<DemandaPorTipo[]>([])
+  const [vagasSolicitadas, setVagasSolicitadas] = useState<SolicitacaoVaga[]>([])
+  const [statsVagas, setStatsVagas] = useState({
+    total: 0,
+    pendentes: 0,
+    aprovadas: 0,
+    reprovadas: 0
+  })
 
   // Cores mais atraentes para os gráficos
   const CORES_STATUS = {
@@ -235,8 +242,35 @@ export default function Dashboard() {
         }))
 
         setDemandasPorTipo(tiposData)
+
+        // Buscar solicitações de vagas
+        const vagasResponse = await databases.listDocuments(
+          APPWRITE_CONFIG.databaseId,
+          APPWRITE_CONFIG.collections.VAGAS,  // Certifique-se que esta collection existe
+          [Query.orderDesc('created_at')]
+        )
+
+        const vagasData = vagasResponse.documents
+        setVagasSolicitadas(vagasData)
+
+        // Calcular estatísticas de vagas
+        const vagasStats = vagasData.reduce((acc: any, vaga) => {
+          acc.total++
+          if (vaga.status === 'pendente') acc.pendentes++
+          if (vaga.status === 'aprovada') acc.aprovadas++
+          if (vaga.status === 'reprovada') acc.reprovadas++
+          return acc
+        }, {
+          total: 0,
+          pendentes: 0,
+          aprovadas: 0,
+          reprovadas: 0
+        })
+
+        setStatsVagas(vagasStats)
+
       } catch (error) {
-        console.error('Erro ao buscar demandas:', error)
+        console.error('Erro ao buscar dados:', error)
       } finally {
         setLoading(false)
       }
@@ -349,6 +383,47 @@ export default function Dashboard() {
               </div>
               <p className="mt-2 text-2xl font-semibold text-gray-900">{estatisticas.suspensas}</p>
             </div>
+          </div>
+        </div>
+
+        {/* Nova seção de Vagas */}
+        <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200 mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <UserGroupIcon className="w-6 h-6 text-blue-500" />
+              <h2 className="text-lg font-semibold text-gray-900">
+                Solicitações de Vagas
+              </h2>
+            </div>
+            <Link
+              to="/lista-solicitacoes-vagas"
+              className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              Visão Detalhada
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            {[
+              { label: 'Total', value: statsVagas.total, status: 'all', icon: ChartBarIcon, color: 'blue' },
+              { label: 'Pendentes', value: statsVagas.pendentes, status: 'pendente', icon: ClockIcon, color: 'yellow' },
+              { label: 'Aprovadas', value: statsVagas.aprovadas, status: 'aprovada', icon: CheckCircleIcon, color: 'green' },
+              { label: 'Reprovadas', value: statsVagas.reprovadas, status: 'reprovada', icon: XCircleIcon, color: 'red' }
+            ].map((item) => (
+              <div
+                key={item.label}
+                onClick={() => navigate(`/detalhes-solicitacao-vaga/${item.status}`)}
+                className="cursor-pointer"
+              >
+                <div className="p-4 rounded-lg bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-600">{item.label}</span>
+                    <item.icon className={`w-5 h-5 text-${item.color}-500`} />
+                  </div>
+                  <p className="mt-2 text-2xl font-semibold text-gray-900">{item.value}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 

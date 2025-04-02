@@ -103,4 +103,21 @@ export interface DemandaPorMes {
 export interface DemandaPorTipo {
   tipo: string;
   quantidade: number;
+}
+
+export interface SolicitacaoVaga {
+  $id: string
+  solicitante: string
+  cargo: string
+  created_at: string
+  status: 'pendente' | 'aprovada' | 'reprovada'
+  statusAtual: number  // número de 1 a 11 representando o status na timeline
+  empresa: string
+  quantidadeVagas: number
+  observacoes?: string
+  historico?: {
+    status: number
+    data: string
+    observacao?: string
+  }[]
 } 
