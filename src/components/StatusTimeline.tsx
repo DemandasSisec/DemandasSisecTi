@@ -11,7 +11,8 @@ const STATUS_LIST = [
   { id: 8, label: 'Aguardando Retorno da Ouvidoria' },
   { id: 9, label: 'Retorno da Ouvidoria Recebido' },
   { id: 10, label: 'Extraindo Candidatos Interessados' },
-  { id: 11, label: 'Candidatos Interessados Encaminhados para Empresa' }
+  { id: 11, label: 'Candidatos Interessados Encaminhados para Empresa' },
+  { id: 12, label: 'Concluído' }
 ]
 
 interface StatusTimelineProps {

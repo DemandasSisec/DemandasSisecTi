@@ -17,6 +17,7 @@ function Sidebar() {
   const vagasMenuItems = [
     { path: '/solicitacao-vagas', icon: BriefcaseIcon, label: 'Nova Solicitação' },
     { path: '/vagas-solicitacoes', icon: DocumentTextIcon, label: 'Lista de Solicitações' },
+    { path: '/cadastrar-empresa', icon: BriefcaseIcon, label: 'Cadastrar Empresa' },
   ]
   
   const adminMenuItems = [

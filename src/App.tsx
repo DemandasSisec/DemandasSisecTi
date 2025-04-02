@@ -17,6 +17,7 @@ import { AuthProvider } from './contexts/AuthContext'
 import SolicitacaoVagas from './pages/SolicitacaoVagas'
 import ListaSolicitacoesVagas from './pages/ListaSolicitacoesVagas'
 import DetalhamentoDemanda from './pages/DetalhamentoDemanda'
+import CadastroEmpresa from './pages/CadastroEmpresa'
 
 function App() {
   return (
@@ -68,6 +69,14 @@ function App() {
                           <Route 
                             path="/detalhes-solicitacao-vaga/:id" 
                             element={<DetalhamentoDemanda />} 
+                          />
+                          <Route 
+                            path="/cadastrar-empresa" 
+                            element={
+                              <ProtectedRoute allowedUserTypes={['admin']}>
+                                <CadastroEmpresa />
+                              </ProtectedRoute>
+                            } 
                           />
                         </Routes>
                       </AppLayout>

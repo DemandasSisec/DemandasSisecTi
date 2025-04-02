@@ -56,7 +56,9 @@ function DetalhesDaSolicitacaoPage() {
     priority: '',
     status: 'pending',
     due_date: '',
-    requester_id: ''
+    requester_id: '',
+    empresa: '',
+    solicitante: ''
   })
   const [originalForm, setOriginalForm] = useState({
     title: '',
@@ -65,7 +67,9 @@ function DetalhesDaSolicitacaoPage() {
     assigned_to: '',
     priority: '',
     status: '',
-    due_date: ''
+    due_date: '',
+    empresa: '',
+    solicitante: ''
   })
   const [loading, setLoading] = useState(true)
   const [files, setFiles] = useState<{ id: string; name: string; size: number }[]>([])
@@ -145,7 +149,9 @@ function DetalhesDaSolicitacaoPage() {
         priority: response.priority,
         status: response.status,
         due_date: response.due_date || '',
-        requester_id: response.requester_id || ''
+        requester_id: response.requester_id || '',
+        empresa: response.empresa || '',
+        solicitante: response.solicitante || ''
       })
     } catch (error) {
       console.error('Erro ao buscar solicitação:', error)
@@ -342,7 +348,9 @@ function DetalhesDaSolicitacaoPage() {
       priority: demand?.priority || '',
       status: demand?.status || '',
       due_date: demand?.due_date || '',
-      requester_id: demand?.requester_id || ''
+      requester_id: demand?.requester_id || '',
+      empresa: demand?.empresa || '',
+      solicitante: demand?.solicitante || ''
     };
     
     setOriginalForm(originalValues);
@@ -748,117 +756,84 @@ function DetalhesDaSolicitacaoPage() {
 
             {/* Coluna da direita - Detalhes */}
             <div className="space-y-6">
-              <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg p-4 border border-gray-200">
-                <h3 className="text-sm font-medium text-gray-500 mb-4">Detalhes</h3>
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm text-gray-500">Status</p>
-                    {isEditing ? (
-                      <select
-                        value={editForm.status}
-                        onChange={(e) => setEditForm(prev => ({ ...prev, status: e.target.value }))}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                      >
-                        <option value="pending">Pendente</option>
-                        <option value="in_progress">Em Andamento</option>
-                        <option value="completed">Concluída</option>
-                        <option value="cancelled">Cancelada</option>
-                      </select>
-                    ) : (
-                      <div className="mt-1">
-                        <StatusBadge status={translateStatus(demand.status)} />
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Prioridade</p>
-                    {isEditing ? (
-                      <select
-                        value={editForm.priority}
-                        onChange={(e) => setEditForm(prev => ({ ...prev, priority: e.target.value }))}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                      >
-                        <option value="baixa">Baixa</option>
-                        <option value="media">Média</option>
-                        <option value="alta">Alta</option>
-                      </select>
-                    ) : (
-                      <p className="text-gray-700 font-medium capitalize">{demand.priority}</p>
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Tipo</p>
-                    {isEditing ? (
-                      <select
-                        value={editForm.department}
-                        onChange={(e) => setEditForm(prev => ({ ...prev, department: e.target.value }))}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                      >
-                        <option value="desenvolvimento">Desenvolvimento</option>
-                        <option value="dados">Dados</option>
-                        <option value="suporte">Suporte</option>
-                        <option value="infraestrutura">Infraestrutura</option>
-                        <option value="outros">Outros</option>
-                      </select>
-                    ) : (
-                      <p className="text-gray-700 font-medium capitalize">
-                        {formatDepartment(demand.department)}
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Criado em</p>
-                    <p className="text-gray-700 font-medium">
-                      {formatDate(demand.created_at)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Prazo</p>
-                    {isEditing ? (
-                      <div className="space-y-2">
-                        <input
-                          type="date"
-                          value={editForm.due_date || ''}
-                          onChange={(e) => setEditForm(prev => ({ ...prev, due_date: e.target.value }))}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                        />
-                      </div>
-                    ) : (
-                      <p className="text-gray-700 font-medium">
-                        {formatDate(demand.due_date)}
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Responsável</p>
-                    {isEditing ? (
-                      <SelectResponsavel
-                        value={editForm.assigned_to}
-                        onChange={(value) => setEditForm(prev => ({ ...prev, assigned_to: value }))}
-                      />
-                    ) : (
-                      <p className="text-gray-700 font-medium">
-                        {demand.assigned_to || 'Não atribuído'}
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Solicitante</p>
-                    <p className="text-gray-700 font-medium">
-                      {demand.requester_id || 'Não definido'}
-                    </p>
-                  </div>
-                  {demand.status === 'suspenso' && demand.dataSuspensao && (
-                    <div>
-                      <p className="text-sm text-gray-500">Tempo em Suspensão</p>
-                      <div className="mt-1">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                          {calcularTempoSuspensao(demand.dataSuspensao)}
-                        </span>
-                      </div>
-                    </div>
+              {/* Card de Informações */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-lg font-semibold text-gray-900">Informações da Solicitação</h2>
+                  {isAdminOrTI && demand?.status !== 'concluida' && (
+                    <button
+                      onClick={handleEdit}
+                      className="px-4 py-2 text-sm text-white bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all duration-200"
+                    >
+                      Editar
+                    </button>
                   )}
                 </div>
+                
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500 mb-1">
+                      Empresa
+                    </label>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        value={editForm.empresa}
+                        onChange={(e) => setEditForm(prev => ({ ...prev, empresa: e.target.value }))}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    ) : (
+                      <p className="text-gray-900">{demand.empresa}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500 mb-1">
+                      Data da Solicitação
+                    </label>
+                    <p className="text-gray-900">{formatDate(demand.created_at)}</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500 mb-1">
+                      Solicitante
+                    </label>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        value={editForm.solicitante}
+                        onChange={(e) => setEditForm(prev => ({ ...prev, solicitante: e.target.value }))}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    ) : (
+                      <p className="text-gray-900">{demand.solicitante}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500 mb-1">
+                      Responsável
+                    </label>
+                    <p className="text-gray-900">Lucas Fontoura</p>
+                  </div>
+                </div>
+
+                {isEditing && (
+                  <div className="flex justify-end space-x-3 mt-6">
+                    <button
+                      onClick={handleCancel}
+                      className="px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-all duration-200"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={handleSave}
+                      className="px-4 py-2 text-sm text-white bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all duration-200"
+                    >
+                      Salvar
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Seção de Arquivos */}

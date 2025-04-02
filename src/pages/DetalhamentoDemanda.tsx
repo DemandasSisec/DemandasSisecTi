@@ -16,7 +16,8 @@ const STATUS_LIST = [
   { id: 8, label: 'Aguardando Retorno da Ouvidoria' },
   { id: 9, label: 'Retorno da Ouvidoria Recebido' },
   { id: 10, label: 'Extraindo Candidatos Interessados' },
-  { id: 11, label: 'Candidatos Interessados Encaminhados para Empresa' }
+  { id: 11, label: 'Candidatos Interessados Encaminhados para Empresa' },
+  { id: 12, label: 'Concluído' }
 ]
 
 // Dados mockados para visualização
@@ -52,6 +53,12 @@ export default function DetalhamentoDemanda() {
   const [loading] = useState(false)
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false)
   const [selectedStatus, setSelectedStatus] = useState(demandaMock.statusAtual)
+  const [editForm, setEditForm] = useState({
+    empresa: '',
+    solicitante: '',
+    responsavel: 'Lucas Fontoura'
+  })
+  const [isEditing, setIsEditing] = useState(false)
 
   const handleStatusChange = async (newStatus: number) => {
     try {
@@ -82,6 +89,15 @@ export default function DetalhamentoDemanda() {
   const handleDelete = async (fileId: string) => {
     // Aqui virá a lógica de delete
     console.log('Deletando arquivo:', fileId)
+  }
+
+  const handleEdit = () => {
+    setEditForm({
+      empresa: demandaMock.empresa || '',
+      solicitante: demandaMock.solicitante || '',
+      responsavel: 'Lucas Fontoura'
+    })
+    setIsEditing(true)
   }
 
   if (loading) {
@@ -135,27 +151,91 @@ export default function DetalhamentoDemanda() {
         <div className="w-2/3 flex flex-col gap-6">
           {/* Card de Informações */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Informações da Solicitação</h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">Informações da Solicitação</h2>
+              {!isEditing && (
+                <button
+                  onClick={handleEdit}
+                  className="px-4 py-2 text-sm text-white bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all duration-200"
+                >
+                  Editar
+                </button>
+              )}
+            </div>
+            
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <p className="text-sm text-gray-500">Empresa</p>
-                <p className="text-gray-900 font-medium">{demandaMock.empresa}</p>
+                <label className="block text-sm font-medium text-gray-500 mb-1">
+                  Empresa
+                </label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={editForm.empresa}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, empresa: e.target.value }))}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                ) : (
+                  <p className="text-gray-900">{demandaMock.empresa}</p>
+                )}
               </div>
               <div>
-                <p className="text-sm text-gray-500">Cargo</p>
-                <p className="text-gray-900 font-medium">{demandaMock.cargo}</p>
+                <label className="block text-sm font-medium text-gray-500 mb-1">
+                  Data da Solicitação
+                </label>
+                <p className="text-gray-900">{new Date(demandaMock.created_at).toLocaleDateString('pt-BR')}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Data da Solicitação</p>
-                <p className="text-gray-900 font-medium">
-                  {new Date(demandaMock.created_at).toLocaleDateString('pt-BR')}
-                </p>
+                <label className="block text-sm font-medium text-gray-500 mb-1">
+                  Solicitante
+                </label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={editForm.solicitante}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, solicitante: e.target.value }))}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                ) : (
+                  <p className="text-gray-900">{demandaMock.solicitante}</p>
+                )}
               </div>
               <div>
-                <p className="text-sm text-gray-500">Solicitante</p>
-                <p className="text-gray-900 font-medium">{demandaMock.solicitante}</p>
+                <label className="block text-sm font-medium text-gray-500 mb-1">
+                  Responsável
+                </label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={editForm.responsavel}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, responsavel: e.target.value }))}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                ) : (
+                  <p className="text-gray-900">Lucas Fontoura</p>
+                )}
               </div>
             </div>
+
+            {isEditing && (
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  onClick={() => setIsEditing(false)}
+                  className="px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-all duration-200"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => {
+                    // Aqui virá a lógica de salvar as alterações
+                    setIsEditing(false)
+                  }}
+                  className="px-4 py-2 text-sm text-white bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all duration-200"
+                >
+                  Salvar
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Grid de Cards de Arquivos */}
