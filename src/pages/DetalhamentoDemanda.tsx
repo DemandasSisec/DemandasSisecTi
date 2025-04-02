@@ -187,7 +187,7 @@ export default function DetalhamentoDemanda() {
             </div>
 
             {/* Enviado para Ouvidoria */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Enviado para Ouvidoria</h2>
               {arquivosMock.envioOuvidoria ? (
                 <>
@@ -204,19 +204,21 @@ export default function DetalhamentoDemanda() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex justify-end items-center space-x-2 mt-2 mb-1">
-                    <button
-                      onClick={() => handleDownload(arquivosMock.envioOuvidoria.id, arquivosMock.envioOuvidoria.nome)}
-                      className="px-6 py-2.5 text-sm text-white bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all duration-200"
-                    >
-                      Baixar
-                    </button>
-                    <button
-                      onClick={() => handleDelete(arquivosMock.envioOuvidoria.id)}
-                      className="p-2.5 text-gray-400 hover:text-red-500 transition-colors"
-                    >
-                      <TrashIcon className="h-5 w-5" />
-                    </button>
+                  <div className="flex justify-end mt-4">
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => handleDownload(arquivosMock.envioOuvidoria.id, arquivosMock.envioOuvidoria.nome)}
+                        className="px-4 py-2 text-sm text-white bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all duration-200"
+                      >
+                        Baixar
+                      </button>
+                      <button
+                        onClick={() => handleDelete(arquivosMock.envioOuvidoria.id)}
+                        className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                      >
+                        <TrashIcon className="h-5 w-5" />
+                      </button>
+                    </div>
                   </div>
                 </>
               ) : (
