@@ -15,41 +15,41 @@ import { toast } from 'react-hot-toast'
 import { databases } from '../config/appwrite'
 import { APPWRITE_CONFIG } from '../config/appwrite'
 import { Query } from 'appwrite'
-import type { Solicitacao } from '../types/appwrite'
+import type { Demand } from '../types/appwrite'
 
-export function StatusBadge({ status }: { status: Solicitacao['status'] }) {
+export function StatusBadge({ status }: { status: string }) {
   const styles = {
-    pendente: 'bg-yellow-100 text-yellow-800 border border-yellow-200',
-    em_andamento: 'bg-blue-100 text-blue-800 border border-blue-200',
-    concluida: 'bg-green-100 text-green-800 border border-green-200',
-    suspenso: 'bg-red-100 text-red-800 border border-red-200'
+    pending: 'bg-yellow-100 text-yellow-800 border border-yellow-200',
+    in_progress: 'bg-blue-100 text-blue-800 border border-blue-200',
+    completed: 'bg-green-100 text-green-800 border border-green-200',
+    cancelled: 'bg-red-100 text-red-800 border border-red-200'
   }
 
   const icons = {
-    pendente: ClockIcon,
-    em_andamento: ClockIcon,
-    concluida: CheckCircleIcon,
-    suspenso: ClockIcon
+    pending: ClockIcon,
+    in_progress: ClockIcon,
+    completed: CheckCircleIcon,
+    cancelled: ClockIcon
   }
 
   const labels = {
-    pendente: 'Pendente',
-    em_andamento: 'Em Andamento',
-    concluida: 'Concluída',
-    suspenso: 'Suspenso'
+    pending: 'Pendente',
+    in_progress: 'Em Andamento',
+    completed: 'Concluída',
+    cancelled: 'Cancelada'
   }
 
-  const Icon = icons[status]
+  const Icon = icons[status as keyof typeof icons] || icons.pending
 
   return (
-    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${styles[status]} shadow-sm`}>
+    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${styles[status as keyof typeof styles] || styles.pending} shadow-sm`}>
       <Icon className="w-3.5 h-3.5 mr-1" />
-      {labels[status]}
+      {labels[status as keyof typeof labels] || status}
     </span>
   )
 }
 
-export function UrgenciaBadge({ urgencia }: { urgencia: Solicitacao['urgencia'] }) {
+export function UrgenciaBadge({ urgencia }: { urgencia: string }) {
   const styles = {
     baixa: 'bg-blue-100 text-blue-800 border border-blue-200',
     media: 'bg-yellow-100 text-yellow-800 border border-yellow-200',
@@ -57,26 +57,41 @@ export function UrgenciaBadge({ urgencia }: { urgencia: Solicitacao['urgencia'] 
   }
 
   return (
-    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${styles[urgencia]} shadow-sm`}>
+    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${styles[urgencia as keyof typeof styles] || styles.baixa} shadow-sm`}>
       {urgencia.charAt(0).toUpperCase() + urgencia.slice(1)}
     </span>
   )
 }
 
-const formatarData = (data: string) => {
-  const date = new Date(data + 'T00:00:00')
-  const dia = date.getDate().toString().padStart(2, '0')
-  const mes = (date.getMonth() + 1).toString().padStart(2, '0')
-  const ano = date.getFullYear()
-  return `${dia} / ${mes} / ${ano}`
+const formatarData = (data: string | null) => {
+  if (!data) return 'N/A'
+  
+  try {
+    // Remove a parte do timezone se existir
+    const cleanDate = data.split('T')[0]
+    const date = new Date(cleanDate)
+    
+    if (isNaN(date.getTime())) {
+      return 'Data inválida'
+    }
+
+    return date.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    })
+  } catch (error) {
+    console.error('Erro ao formatar data:', error)
+    return 'Data inválida'
+  }
 }
 
 const formatStatus = (status: string) => {
   const statusMap = {
-    pendente: 'Pendente',
-    em_andamento: 'Em Andamento',
-    concluida: 'Concluída',
-    suspenso: 'Suspenso'
+    pending: 'Pendente',
+    in_progress: 'Em Andamento',
+    completed: 'Concluída',
+    cancelled: 'Cancelada'
   }
   return statusMap[status as keyof typeof statusMap] || status
 }
@@ -94,28 +109,28 @@ const formatarTipo = (tipo: string) => {
 
 function ListaSolicitacoes() {
   const { user } = useAuth()
-  const isAdmin = user?.role === 'adm' || user?.role === 'equipe_ti'
+  const isAdmin = user?.role === 'admin' || user?.role === 'admin_ti'
   const navigate = useNavigate()
   const [searchTerm, setSearchTerm] = useState('')
-  const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>([])
-  const [filteredSolicitacoes, setFilteredSolicitacoes] = useState<Solicitacao[]>([])
+  const [demands, setDemands] = useState<Demand[]>([])
+  const [filteredDemands, setFilteredDemands] = useState<Demand[]>([])
   const [currentPage, setCurrentPage] = useState<{ [key: string]: number }>({
-    pendente: 1,
-    em_andamento: 1,
-    concluida: 1,
-    suspenso: 1
+    pending: 1,
+    in_progress: 1,
+    completed: 1,
+    cancelled: 1
   })
   const itemsPerPage = 10
   const [filters, setFilters] = useState<{ [key: string]: { [key: string]: string } }>({
-    pendente: { responsavel: '', solicitante: '', tipo: '', urgencia: '' },
-    em_andamento: { responsavel: '', solicitante: '', tipo: '', urgencia: '' },
-    concluida: { responsavel: '', solicitante: '', tipo: '', urgencia: '' },
-    suspenso: { responsavel: '', solicitante: '', tipo: '', urgencia: '' }
+    pending: { responsavel: '', solicitante: '', tipo: '', urgencia: '' },
+    in_progress: { responsavel: '', solicitante: '', tipo: '', urgencia: '' },
+    completed: { responsavel: '', solicitante: '', tipo: '', urgencia: '' },
+    cancelled: { responsavel: '', solicitante: '', tipo: '', urgencia: '' }
   })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const fetchSolicitacoes = async () => {
+    const fetchDemands = async () => {
       try {
         const response = await databases.listDocuments(
           APPWRITE_CONFIG.databaseId,
@@ -124,8 +139,10 @@ function ListaSolicitacoes() {
             Query.orderDesc('created_at')
           ]
         )
-        setSolicitacoes(response.documents as Solicitacao[])
-        setFilteredSolicitacoes(response.documents as Solicitacao[])
+        
+        const demands = response.documents as unknown as Demand[]
+        setDemands(demands)
+        setFilteredDemands(demands)
       } catch (error) {
         console.error('Erro ao buscar solicitações:', error)
         toast.error('Erro ao carregar solicitações')
@@ -134,19 +151,19 @@ function ListaSolicitacoes() {
       }
     }
 
-    fetchSolicitacoes()
+    fetchDemands()
   }, [])
 
   useEffect(() => {
     const filtered = searchTerm
-      ? solicitacoes.filter(s => 
-          s.$id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          s.solicitante.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (s.titulo || '').toLowerCase().includes(searchTerm.toLowerCase())
+      ? demands.filter(d => 
+          d.$id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          d.requester_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          d.title.toLowerCase().includes(searchTerm.toLowerCase())
         )
-      : solicitacoes
-    setFilteredSolicitacoes(filtered)
-  }, [searchTerm, solicitacoes])
+      : demands
+    setFilteredDemands(filtered)
+  }, [searchTerm, demands])
 
   const handleDelete = async (id: string) => {
     const result = await Swal.fire({
@@ -178,8 +195,8 @@ function ListaSolicitacoes() {
         )
         
         // Atualiza a lista local removendo a solicitação excluída
-        setSolicitacoes(prevSolicitacoes => 
-          prevSolicitacoes.filter(s => s.$id !== id)
+        setDemands(prevDemands => 
+          prevDemands.filter(d => d.$id !== id)
         )
         
         Swal.fire({
@@ -228,18 +245,18 @@ function ListaSolicitacoes() {
   // Função para obter valores únicos para cada coluna em uma lista específica
   const getUniqueValues = (status: string, key: string) => {
     return Array.from(new Set(
-      solicitacoes
+      demands
         .filter(item => item.status === status)
-        .map(item => item[key as keyof Solicitacao])
+        .map(item => item[key as keyof Demand])
     )).filter(Boolean).sort()
   }
 
   // Função para aplicar os filtros em uma lista específica
-  const applyFilters = (items: Solicitacao[], status: string) => {
+  const applyFilters = (items: Demand[], status: string) => {
     return items.filter(item => {
       return Object.entries(filters[status]).every(([key, value]) => {
         if (!value) return true
-        return item[key as keyof Solicitacao] === value
+        return item[key as keyof Demand] === value
       })
     })
   }
@@ -275,14 +292,14 @@ function ListaSolicitacoes() {
   )
 
   const renderStatusSection = (status: string, title: string) => {
-    let filteredByStatus = solicitacoes.filter(s => s.status === status)
+    let filteredByStatus = filteredDemands.filter(d => d.status === status)
     
     // Aplicar busca por texto
     if (searchTerm) {
-      filteredByStatus = filteredByStatus.filter(s => 
-        s.$id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        s.solicitante.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (s.titulo || '').toLowerCase().includes(searchTerm.toLowerCase())
+      filteredByStatus = filteredByStatus.filter(d => 
+        d.$id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        d.requester_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        d.title.toLowerCase().includes(searchTerm.toLowerCase())
       )
     }
 
@@ -332,47 +349,47 @@ function ListaSolicitacoes() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {currentItems.map((solicitacao) => (
+                {currentItems.map((demand) => (
                   <tr 
-                    key={solicitacao.$id} 
+                    key={demand.$id} 
                     className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-50 transition-colors duration-150"
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <Link
-                        to={`/detalhes-solicitacao/${solicitacao.$id}`}
+                        to={`/detalhes-solicitacao/${demand.$id}`}
                         className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
                       >
-                        {solicitacao.$id}
+                        {demand.$id}
                       </Link>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-600">
-                        {solicitacao.responsavel || 'N/A'}
+                        {demand.assigned_to || 'N/A'}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">
-                        {solicitacao.solicitante}
+                        {demand.requester_id}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-600">
-                        {formatarTipo(solicitacao.tipo)}
+                        {formatarTipo(demand.department)}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <UrgenciaBadge urgencia={solicitacao.urgencia} />
+                      <UrgenciaBadge urgencia={demand.priority} />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <StatusBadge status={solicitacao.status} />
+                      <StatusBadge status={demand.status} />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {solicitacao.prazo ? formatarData(solicitacao.prazo) : 'N/A'}
+                      {formatarData(demand.due_date)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       {isAdmin && (
                         <button
-                          onClick={() => handleDelete(solicitacao.$id)}
+                          onClick={() => handleDelete(demand.$id)}
                           className="text-gray-400 hover:text-red-500 transition-colors"
                         >
                           <TrashIcon className="h-5 w-5" />
@@ -459,12 +476,12 @@ function ListaSolicitacoes() {
         </div>
       </div>
 
-      {renderStatusSection('pendente', 'Pendentes')}
-      {renderStatusSection('em_andamento', 'Em Andamento')}
-      {renderStatusSection('concluida', 'Concluídas')}
-      {renderStatusSection('suspenso', 'Suspensas')}
+      {renderStatusSection('pending', 'Pendentes')}
+      {renderStatusSection('in_progress', 'Em Andamento')}
+      {renderStatusSection('completed', 'Concluídas')}
+      {renderStatusSection('cancelled', 'Canceladas')}
 
-      {filteredSolicitacoes.length === 0 && (
+      {filteredDemands.length === 0 && (
         <div className="text-center py-12">
           <p className="text-gray-500 text-lg">
             Nenhuma solicitação encontrada.

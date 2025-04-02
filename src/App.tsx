@@ -14,6 +14,8 @@ import ResponsaveisDetalhado from './pages/ResponsaveisDetalhado'
 import { LoadingProvider } from './context/LoadingContext'
 import { SmallLoadingProvider } from './context/SmallLoadingContext'
 import { AuthProvider } from './contexts/AuthContext'
+import SolicitacaoVagas from './pages/SolicitacaoVagas'
+import ListaSolicitacoesVagas from './pages/ListaSolicitacoesVagas'
 
 function App() {
   return (
@@ -53,6 +55,15 @@ function App() {
                           />
                           <Route path="/" element={<Navigate to="/dashboard" />} />
                           <Route path="responsaveis-detalhado" element={<ResponsaveisDetalhado />} />
+                          <Route path="solicitacao-vagas" element={<SolicitacaoVagas />} />
+                          <Route 
+                            path="/vagas-solicitacoes" 
+                            element={
+                              <ProtectedRoute allowedUserTypes={['admin']}>
+                                <ListaSolicitacoesVagas />
+                              </ProtectedRoute>
+                            } 
+                          />
                         </Routes>
                       </AppLayout>
                     </ProtectedRoute>

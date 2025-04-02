@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { HomeIcon, PlusCircleIcon, ClipboardDocumentListIcon, ArrowLeftOnRectangleIcon, UserPlusIcon, ViewColumnsIcon, ChartBarIcon } from '@heroicons/react/24/outline'
+import { HomeIcon, PlusCircleIcon, ClipboardDocumentListIcon, ArrowLeftOnRectangleIcon, UserPlusIcon, ViewColumnsIcon, ChartBarIcon, BriefcaseIcon, DocumentTextIcon } from '@heroicons/react/24/outline'
 import { useAuth } from '../context/AuthContext'
 
 function Sidebar() {
@@ -12,6 +12,11 @@ function Sidebar() {
     { path: '/dashboard', icon: ChartBarIcon, label: 'Dashboard' },
     // { path: '/painel-demandas', icon: ViewColumnsIcon, label: 'Por Responsável' },
     { path: '/lista-solicitacoes', icon: ClipboardDocumentListIcon, label: 'Solicitações' },
+  ]
+  
+  const vagasMenuItems = [
+    { path: '/solicitacao-vagas', icon: BriefcaseIcon, label: 'Nova Solicitação' },
+    { path: '/vagas-solicitacoes', icon: DocumentTextIcon, label: 'Lista de Solicitações' },
   ]
   
   const adminMenuItems = [
@@ -83,6 +88,28 @@ function Sidebar() {
       
       <nav className="flex-1 mt-6 px-3">
         {menuItems.map((item) => (
+          <Link
+            key={item.path}
+            to={item.path}
+            className={`flex items-center px-4 py-3 mb-2 rounded-lg text-gray-300 hover:bg-white/10 transition-all duration-200 group ${
+              isActive(item.path) 
+                ? 'bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-white shadow-sm' 
+                : ''
+            }`}
+          >
+            <item.icon className={`w-5 h-5 mr-3 transition-transform duration-200 group-hover:scale-110 ${
+              isActive(item.path) ? 'text-blue-400' : ''
+            }`} />
+            <span className="text-sm font-medium">{item.label}</span>
+          </Link>
+        ))}
+
+        <div className="my-4 border-t border-gray-700/50" />
+
+        <div className="mb-2 px-4">
+          <span className="text-xs font-medium text-gray-400">VAGAS</span>
+        </div>
+        {vagasMenuItems.map((item) => (
           <Link
             key={item.path}
             to={item.path}

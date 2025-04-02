@@ -8,10 +8,13 @@ export const APPWRITE_CONFIG = {
         DEMANDS: '67e2fa6f0010aeab4651',
         USERS: '67e2fa600011a5916659',
         COMMENTS: '67e2fa7900218cb6059c',
-        DEPARTMENTS: '67e2fa840000c31b81c2'
+        DEPARTMENTS: '67e2fa840000c31b81c2',
+        VAGAS: 'ID_DA_SUA_COLLECTION_DE_VAGAS',
+        JOB_REQUESTS: '67e2fa7900218cb6059d'
     },
     storage: {
-        DEMANDS_FILES: '67e412d900369dd93f73'
+        DEMANDS_FILES: '67e412d900369dd93f73',
+        VAGAS_FILES: 'ID_DO_SEU_BUCKET_VAGAS'
     }
 } as const;
 
