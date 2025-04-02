@@ -7,6 +7,8 @@ import { loadSlim } from "tsparticles-slim"
 import Particles from "react-particles"
 import toast from 'react-hot-toast'
 import '../utils/Login.css'
+import Lottie from 'lottie-react'
+import loadingAnimation from '../assets/Animation_loading.json'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -16,6 +18,7 @@ export default function Login() {
     email: '',
     password: ''
   })
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     if (user) {
@@ -25,7 +28,7 @@ export default function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
+    setIsLoading(true)
 
     try {
       await login(formData.email, formData.password)
@@ -34,7 +37,7 @@ export default function Login() {
       console.error('Erro no login:', error)
       toast.error('Email ou senha inválidos')
     } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
   }
 
@@ -104,6 +107,17 @@ export default function Login() {
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-blue-600 to-cyan-500">
+      {/* Loading deve ser o primeiro elemento */}
+      {isLoading && (
+        <div className="fixed inset-0 w-full h-full bg-white z-[9999] flex items-center justify-center">
+          <Lottie
+            animationData={loadingAnimation}
+            loop={true}
+            style={{ width: 300, height: 300 }}
+          />
+        </div>
+      )}
+
       {/* Particles background */}
       <Particles
         id="tsparticles"
