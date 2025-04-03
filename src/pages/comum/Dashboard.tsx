@@ -1,11 +1,11 @@
 // src/pages/Dashboard.tsx
 import { useState, useEffect } from 'react'
-import { databases } from '../config/appwrite'
-import { APPWRITE_CONFIG } from '../config/appwrite'
+import { databases } from '../../config/appwrite'
+import { APPWRITE_CONFIG } from '../../config/appwrite'
 import { Query } from 'appwrite'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
-import type { Solicitacao, SolicitacaoVaga } from '../types/appwrite'
+import { useAuth } from '../../contexts/AuthContext'
+import type { Solicitacao, SolicitacaoVaga } from '../../types/appwrite'
 import {
   ChartBarIcon,
   ClipboardDocumentListIcon,

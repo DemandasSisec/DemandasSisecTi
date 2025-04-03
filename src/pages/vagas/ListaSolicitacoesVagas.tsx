@@ -8,12 +8,11 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
 } from '@heroicons/react/24/outline'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../../contexts/AuthContext'
 import Swal from 'sweetalert2'
 import { toast } from 'react-hot-toast'
-import { databases } from '../config/appwrite'
-import { APPWRITE_CONFIG } from '../config/appwrite'
-import { Query } from 'appwrite'
+import { databases } from '../../config/appwrite'
+import { APPWRITE_CONFIG } from '../../config/appwrite'
 
 // Definindo o tipo para as solicitações de vagas
 interface JobRequest {

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { databases, account } from '../config/appwrite'
-import { APPWRITE_CONFIG } from '../config/appwrite'
+import { databases, account } from '../../config/appwrite'
+import { APPWRITE_CONFIG } from '../../config/appwrite'
 import { ID } from 'appwrite'
 import toast from 'react-hot-toast'
 

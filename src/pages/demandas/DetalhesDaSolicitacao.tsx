@@ -1,22 +1,18 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { databases } from '../config/appwrite'
-import { APPWRITE_CONFIG } from '../config/appwrite'
+import { databases } from '../../config/appwrite'
+import { APPWRITE_CONFIG } from '../../config/appwrite'
 import { ID, Query } from 'appwrite'
 import toast from 'react-hot-toast'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../../contexts/AuthContext'
 import { ChevronLeftIcon } from '@heroicons/react/24/outline'
-import { StatusBadge } from '../components/StatusBadge'
-import { UrgenciaBadge } from '../components/UrgenciaBadge'
 import { TrashIcon } from '@heroicons/react/24/outline'
 import { Dialog, Transition } from '@headlessui/react'
 import { Fragment } from 'react'
-import { SelectResponsavel } from '../components/SelectResponsavel'
-import { differenceInYears, differenceInMonths, differenceInHours, differenceInMinutes } from 'date-fns';
-import type { Demand, Comment } from '../types/appwrite'
-import { formatDate } from '../utils/formatDate'
+import type { Demand, Comment } from '../../types/appwrite'
+import { formatDate } from '../../utils/formatDate'
 import { PaperClipIcon } from '@heroicons/react/24/outline'
-import { storage } from '../config/appwrite'
+import { storage } from '../../config/appwrite'
 
 interface Adiamento {
   dataAntiga: string

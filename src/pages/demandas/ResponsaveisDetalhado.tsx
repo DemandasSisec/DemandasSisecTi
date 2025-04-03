@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { databases } from '../config/appwrite'
-import { APPWRITE_CONFIG } from '../config/appwrite'
+import { databases } from '../../config/appwrite'
+import { APPWRITE_CONFIG } from '../../config/appwrite'
 import { Query } from 'appwrite'
 import { UserGroupIcon, ArrowLeftIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
 import { Link, useNavigate } from 'react-router-dom'

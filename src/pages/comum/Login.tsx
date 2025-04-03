@@ -1,14 +1,14 @@
 import { ClipboardDocumentListIcon, ChartBarIcon, UserGroupIcon } from '@heroicons/react/24/outline'
 import { useState, useEffect, useCallback } from 'react'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../../contexts/AuthContext'
 import type { Engine } from "tsparticles-engine"
 import { useNavigate } from 'react-router-dom'
 import { loadSlim } from "tsparticles-slim"
 import Particles from "react-particles"
 import toast from 'react-hot-toast'
-import '../utils/Login.css'
+import '../../utils/Login.css'
 import Lottie from 'lottie-react'
-import loadingAnimation from '../assets/Animation_loading.json'
+import loadingAnimation from '../../assets/Animation_loading.json'
 
 export default function Login() {
   const navigate = useNavigate()

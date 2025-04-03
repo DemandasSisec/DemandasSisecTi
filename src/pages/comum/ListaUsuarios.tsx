@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
-import { databases } from '../config/appwrite'
-import { APPWRITE_CONFIG } from '../config/appwrite'
+import { databases } from '../../config/appwrite'
+import { APPWRITE_CONFIG } from '../../config/appwrite'
 import { Query } from 'appwrite'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import type { User } from '../types/appwrite'
+import type { User } from '../../types/appwrite'
 
 export default function ListaUsuarios() {
   const [usuarios, setUsuarios] = useState<User[]>([])

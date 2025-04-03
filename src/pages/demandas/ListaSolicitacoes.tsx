@@ -9,13 +9,13 @@ import {
   ChevronRightIcon,
   ChevronDownIcon
 } from '@heroicons/react/24/outline'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../../contexts/AuthContext'
 import Swal from 'sweetalert2'
 import { toast } from 'react-hot-toast'
-import { databases } from '../config/appwrite'
-import { APPWRITE_CONFIG } from '../config/appwrite'
+import { databases } from '../../config/appwrite'
+import { APPWRITE_CONFIG } from '../../config/appwrite'
 import { Query } from 'appwrite'
-import type { Demand } from '../types/appwrite'
+import type { Demand } from '../../types/appwrite'
 
 export function StatusBadge({ status }: { status: string }) {
   const styles = {

@@ -1,14 +1,14 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { databases, account } from '../config/appwrite'
-import { APPWRITE_CONFIG } from '../config/appwrite'
+import { databases, account } from '../../config/appwrite'
+import { APPWRITE_CONFIG } from '../../config/appwrite'
 import { ID } from 'appwrite'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../../contexts/AuthContext'
 import toast from 'react-hot-toast'
-import { SelectResponsavel } from '../components/SelectResponsavel'
-import type { TipoDemanda, Urgencia, Demand } from '../types/appwrite'
-import { FileUpload } from '../components/FileUpload'
-import { storageService } from '../services/storage.service'
+import { SelectResponsavel } from '../../components/SelectResponsavel'
+import type { Demand } from '../../types/appwrite'
+import { FileUpload } from '../../components/FileUpload'
+import { storageService } from '../../services/storage.service'
 import { AppwriteException } from 'appwrite'
 
 interface FormData {
@@ -95,13 +95,6 @@ export default function NovaSolicitacao() {
         attachments: '',
         arquivos: uploadedFileIds
       }
-
-      const novaSolicitacao = await databases.createDocument<Demand>(
-        APPWRITE_CONFIG.databaseId,
-        APPWRITE_CONFIG.collections.DEMANDS,
-        ID.unique(),
-        documentData
-      )
 
       toast.success('Solicitação criada com sucesso!')
       navigate('/painel-demandas')
