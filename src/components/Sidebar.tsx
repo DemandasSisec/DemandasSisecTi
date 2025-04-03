@@ -80,9 +80,7 @@ function Sidebar() {
             <span className="text-xs px-2 py-0.5 bg-blue-500/20 text-blue-200 rounded-full inline-flex items-center w-fit">
               {getTipoUsuario(user?.role || 'user')}
             </span>
-            <span className="text-xs text-gray-400">
-              Departamento: {user?.department || 'Não definido'}
-            </span>
+           
           </div>
         </div>
       </div>
