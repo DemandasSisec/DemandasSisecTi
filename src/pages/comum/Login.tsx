@@ -1,4 +1,4 @@
-import { ClipboardDocumentListIcon, ChartBarIcon, UserGroupIcon } from '@heroicons/react/24/outline'
+import { ClipboardDocumentListIcon, ChartBarIcon, UserGroupIcon, BuildingOfficeIcon } from '@heroicons/react/24/outline'
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import type { Engine } from "tsparticles-engine"
@@ -10,7 +10,11 @@ import '../../utils/Login.css'
 import Lottie from 'lottie-react'
 import loadingAnimation from '../../assets/Animation_loading.json'
 
-export default function Login() {
+interface LoginProps {
+  type?: 'empresa' | 'sisec'
+}
+
+export default function Login({ type = 'sisec' }: LoginProps) {
   const navigate = useNavigate()
   const { login, user } = useAuth()
   const [loading, setLoading] = useState(false)
@@ -105,6 +109,43 @@ export default function Login() {
     detectRetina: true
   } as const;
 
+  const getTitle = () => {
+    return type === 'empresa' ? 'Empresas Parceiras' : 'Equipe TI - SISEC'
+  }
+
+  const getFeatures = () => {
+    if (type === 'empresa') {
+      return [
+        {
+          icon: <BuildingOfficeIcon className="w-6 h-6 text-white" />,
+          text: 'Solicite vagas de forma simples e rápida'
+        },
+        {
+          icon: <ChartBarIcon className="w-6 h-6 text-white" />,
+          text: 'Acompanhe o status de suas solicitações'
+        },
+        {
+          icon: <UserGroupIcon className="w-6 h-6 text-white" />,
+          text: 'Gerencie seus usuários e permissões'
+        }
+      ]
+    }
+    return [
+      {
+        icon: <ClipboardDocumentListIcon className="w-6 h-6 text-white" />,
+        text: 'Gerencie todas as solicitações em um único lugar'
+      },
+      {
+        icon: <ChartBarIcon className="w-6 h-6 text-white" />,
+        text: 'Acompanhe o progresso em tempo real'
+      },
+      {
+        icon: <UserGroupIcon className="w-6 h-6 text-white" />,
+        text: 'Colabore com sua equipe de forma eficiente'
+      }
+    ]
+  }
+
   return (
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-blue-600 to-cyan-500">
       {/* Loading deve ser o primeiro elemento */}
@@ -151,27 +192,17 @@ export default function Login() {
               Controle de Demandas
             </h1>
             <h2 className="text-3xl font-semibold mb-8 text-blue-100">
-              Equipe TI - SISEC
+              {getTitle()}
             </h2>
             <div className="space-y-6 backdrop-blur-sm bg-white/5 rounded-2xl p-6">
-              <div className="flex items-center space-x-4">
-                <div className="bg-white/10 p-3 rounded-lg">
-                  <ClipboardDocumentListIcon className="w-6 h-6 text-white" />
+              {getFeatures().map((feature, index) => (
+                <div key={index} className="flex items-center space-x-4">
+                  <div className="bg-white/10 p-3 rounded-lg">
+                    {feature.icon}
+                  </div>
+                  <p className="text-lg">{feature.text}</p>
                 </div>
-                <p className="text-lg">Gerencie todas as solicitações em um único lugar</p>
-              </div>
-              <div className="flex items-center space-x-4">
-                <div className="bg-white/10 p-3 rounded-lg">
-                  <ChartBarIcon className="w-6 h-6 text-white" />
-                </div>
-                <p className="text-lg">Acompanhe o progresso em tempo real</p>
-              </div>
-              <div className="flex items-center space-x-4">
-                <div className="bg-white/10 p-3 rounded-lg">
-                  <UserGroupIcon className="w-6 h-6 text-white" />
-                </div>
-                <p className="text-lg">Colabore com sua equipe de forma eficiente</p>
-              </div>
+              ))}
             </div>
           </div>
         </div>
@@ -203,16 +234,13 @@ export default function Login() {
                   className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-blue-200 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20"
                 />
               </div>
-              
-              <div>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full py-3 px-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg font-medium hover:from-blue-600 hover:to-cyan-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-blue-100 transition-all duration-150 shadow-lg hover:shadow-xl"
-                >
-                  {loading ? 'Entrando...' : 'Entrar'}
-                </button>
-              </div>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full py-3 px-4 bg-white text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading ? 'Entrando...' : 'Entrar'}
+              </button>
             </form>
           </div>
         </div>

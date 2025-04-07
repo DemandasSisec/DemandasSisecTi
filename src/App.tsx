@@ -18,6 +18,7 @@ import Dashboard from './pages/comum/Dashboard'
 import AppLayout from './components/AppLayout'
 import { Toaster } from 'react-hot-toast'
 import Login from './pages/comum/Login'
+import SelecaoTipoUsuario from './pages/comum/SelecaoTipoUsuario'
 
 function App() {
   return (
@@ -27,7 +28,10 @@ function App() {
           <BrowserRouter>
             <div>
               <Routes>
+                <Route path="/" element={<SelecaoTipoUsuario />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/login-empresa" element={<Login type="empresa" />} />
+                <Route path="/login-sisec" element={<Login type="sisec" />} />
                 <Route
                   path="*"
                   element={
@@ -55,7 +59,6 @@ function App() {
                               </ProtectedRoute>
                             } 
                           />
-                          <Route path="/" element={<Navigate to="/dashboard" />} />
                           <Route path="responsaveis-detalhado" element={<ResponsaveisDetalhado />} />
                           <Route path="solicitacao-vagas" element={<SolicitacaoVagas />} />
                           <Route 
