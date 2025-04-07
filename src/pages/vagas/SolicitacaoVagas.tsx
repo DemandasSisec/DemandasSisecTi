@@ -6,71 +6,17 @@ import { ID } from 'appwrite'
 import { useAuth } from '../../contexts/AuthContext'
 import { ArrowDownTrayIcon, ArrowUpTrayIcon, InformationCircleIcon, CheckCircleIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline'
 
-// Dados de exemplo para os selects
-const UFS = [
-  { sigla: 'AC', nome: 'Acre' },
-  { sigla: 'AL', nome: 'Alagoas' },
-  { sigla: 'AP', nome: 'Amapá' },
-  { sigla: 'AM', nome: 'Amazonas' },
-  { sigla: 'BA', nome: 'Bahia' },
-  { sigla: 'CE', nome: 'Ceará' },
-  { sigla: 'DF', nome: 'Distrito Federal' },
-  { sigla: 'ES', nome: 'Espírito Santo' },
-  { sigla: 'GO', nome: 'Goiás' },
-  { sigla: 'MA', nome: 'Maranhão' },
-  { sigla: 'MT', nome: 'Mato Grosso' },
-  { sigla: 'MS', nome: 'Mato Grosso do Sul' },
-  { sigla: 'MG', nome: 'Minas Gerais' },
-  { sigla: 'PA', nome: 'Pará' },
-  { sigla: 'PB', nome: 'Paraíba' },
-  { sigla: 'PR', nome: 'Paraná' },
-  { sigla: 'PE', nome: 'Pernambuco' },
-  { sigla: 'PI', nome: 'Piauí' },
-  { sigla: 'RJ', nome: 'Rio de Janeiro' },
-  { sigla: 'RN', nome: 'Rio Grande do Norte' },
-  { sigla: 'RS', nome: 'Rio Grande do Sul' },
-  { sigla: 'RO', nome: 'Rondônia' },
-  { sigla: 'RR', nome: 'Roraima' },
-  { sigla: 'SC', nome: 'Santa Catarina' },
-  { sigla: 'SP', nome: 'São Paulo' },
-  { sigla: 'SE', nome: 'Sergipe' },
-  { sigla: 'TO', nome: 'Tocantins' }
-]
-
-// Dados de exemplo para cidades (em um caso real, isso viria de uma API)
-const CIDADES_POR_UF: Record<string, { nome: string, codigoIBGE: string }[]> = {
-  'SP': [
-    { nome: 'São Paulo', codigoIBGE: '3550308' },
-    { nome: 'Campinas', codigoIBGE: '3509502' },
-    { nome: 'Santos', codigoIBGE: '3548500' },
-    { nome: 'Guarulhos', codigoIBGE: '3518800' },
-    { nome: 'São Bernardo do Campo', codigoIBGE: '3548708' }
-  ],
-  'RJ': [
-    { nome: 'Rio de Janeiro', codigoIBGE: '3304557' },
-    { nome: 'São Gonçalo', codigoIBGE: '3304904' },
-    { nome: 'Duque de Caxias', codigoIBGE: '3301702' },
-    { nome: 'Nova Iguaçu', codigoIBGE: '3303500' },
-    { nome: 'Niterói', codigoIBGE: '3303302' }
-  ],
-  'MG': [
-    { nome: 'Belo Horizonte', codigoIBGE: '3106200' },
-    { nome: 'Uberlândia', codigoIBGE: '3170206' },
-    { nome: 'Contagem', codigoIBGE: '3118601' },
-    { nome: 'Juiz de Fora', codigoIBGE: '3136702' },
-    { nome: 'Betim', codigoIBGE: '3106705' }
-  ]
+// Interface para os dados da API do IBGE
+interface EstadoIBGE {
+  id: number
+  sigla: string
+  nome: string
 }
 
-// Adicionar algumas cidades para outros estados
-UFS.forEach(uf => {
-  if (!CIDADES_POR_UF[uf.sigla]) {
-    CIDADES_POR_UF[uf.sigla] = [
-      { nome: `Cidade Principal ${uf.nome}`, codigoIBGE: `0000000` },
-      { nome: `Cidade Secundária ${uf.nome}`, codigoIBGE: `0000001` }
-    ]
-  }
-})
+interface MunicipioIBGE {
+  id: number
+  nome: string
+}
 
 // Sugestões de cargos comuns
 const SUGESTOES_CARGOS = [
@@ -100,12 +46,14 @@ interface VagaItem {
   id: string
   uf: string
   cidade: string
-  codigoIBGE: string
-  numeroVagas: number
+  codigo_ibge: number
+  vagas: number
   cargo: string
   bairro?: string
   pcd: boolean
   link?: string
+  criadoPor?: string
+  dataCriacao?: string
 }
 
 export default function SolicitacaoVagas() {
@@ -113,6 +61,12 @@ export default function SolicitacaoVagas() {
   const [loading, setLoading] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [vagaItems, setVagaItems] = useState<VagaItem[]>([])
+  
+  // Estados para dados da API do IBGE
+  const [estados, setEstados] = useState<EstadoIBGE[]>([])
+  const [municipios, setMunicipios] = useState<MunicipioIBGE[]>([])
+  const [loadingEstados, setLoadingEstados] = useState(false)
+  const [loadingMunicipios, setLoadingMunicipios] = useState(false)
   
   // Estado para o formulário
   const [formData, setFormData] = useState({
@@ -134,6 +88,63 @@ export default function SolicitacaoVagas() {
   
   // Estado para mostrar/esconder sugestões de cargos
   const [showCargoSuggestions, setShowCargoSuggestions] = useState(false)
+
+  // Carregar estados ao montar o componente
+  useEffect(() => {
+    const fetchEstados = async () => {
+      setLoadingEstados(true)
+      try {
+        const response = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados')
+        if (!response.ok) {
+          throw new Error('Erro ao carregar estados')
+        }
+        const data = await response.json()
+        // Ordenar estados por nome
+        const estadosOrdenados = data.sort((a: EstadoIBGE, b: EstadoIBGE) => 
+          a.nome.localeCompare(b.nome, 'pt-BR')
+        )
+        setEstados(estadosOrdenados)
+      } catch (error) {
+        console.error('Erro ao carregar estados:', error)
+        toast.error('Erro ao carregar lista de estados')
+      } finally {
+        setLoadingEstados(false)
+      }
+    }
+
+    fetchEstados()
+  }, [])
+
+  // Carregar municípios quando a UF for selecionada
+  useEffect(() => {
+    const fetchMunicipios = async () => {
+      if (!formData.uf) {
+        setMunicipios([])
+        return
+      }
+
+      setLoadingMunicipios(true)
+      try {
+        const response = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${formData.uf}/municipios`)
+        if (!response.ok) {
+          throw new Error('Erro ao carregar municípios')
+        }
+        const data = await response.json()
+        // Ordenar municípios por nome
+        const municipiosOrdenados = data.sort((a: MunicipioIBGE, b: MunicipioIBGE) => 
+          a.nome.localeCompare(b.nome, 'pt-BR')
+        )
+        setMunicipios(municipiosOrdenados)
+      } catch (error) {
+        console.error('Erro ao carregar municípios:', error)
+        toast.error('Erro ao carregar lista de municípios')
+      } finally {
+        setLoadingMunicipios(false)
+      }
+    }
+
+    fetchMunicipios()
+  }, [formData.uf])
 
   const downloadModelo = () => {
     // URL do seu arquivo modelo
@@ -246,24 +257,49 @@ export default function SolicitacaoVagas() {
   // Função para lidar com mudança de UF
   const handleUfChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const uf = e.target.value
-    setFormData({
-      ...formData,
-      uf,
-      cidade: '',
-      codigoIBGE: ''
-    })
+    
+    // Se uma UF foi selecionada, carregar as cidades automaticamente
+    if (uf) {
+      // Limpar cidade e código IBGE
+      setFormData({
+        ...formData,
+        uf,
+        cidade: '',
+        codigoIBGE: ''
+      })
+    } else {
+      // Se nenhuma UF foi selecionada, limpar todos os campos relacionados
+      setFormData({
+        ...formData,
+        uf: '',
+        cidade: '',
+        codigoIBGE: ''
+      })
+    }
   }
   
   // Função para lidar com mudança de cidade
   const handleCidadeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const cidade = e.target.value
-    const cidadeSelecionada = CIDADES_POR_UF[formData.uf].find(c => c.nome === cidade)
     
-    setFormData({
-      ...formData,
-      cidade,
-      codigoIBGE: cidadeSelecionada ? cidadeSelecionada.codigoIBGE : ''
-    })
+    if (cidade) {
+      // Encontrar a cidade selecionada para obter o código IBGE
+      const cidadeSelecionada = municipios.find(m => m.nome === cidade)
+      
+      if (cidadeSelecionada) {
+        setFormData({
+          ...formData,
+          cidade,
+          codigoIBGE: cidadeSelecionada.id.toString()
+        })
+      }
+    } else {
+      setFormData({
+        ...formData,
+        cidade: '',
+        codigoIBGE: ''
+      })
+    }
   }
   
   // Função para selecionar uma sugestão de cargo
@@ -315,12 +351,14 @@ export default function SolicitacaoVagas() {
       id: ID.unique(),
       uf: formData.uf,
       cidade: formData.cidade,
-      codigoIBGE: formData.codigoIBGE,
-      numeroVagas: Number(formData.numeroVagas),
+      codigo_ibge: parseInt(formData.codigoIBGE),
+      vagas: Number(formData.numeroVagas),
       cargo: formData.cargo,
       bairro: formData.bairro || undefined,
       pcd: formData.pcd,
-      link: formData.link || undefined
+      link: formData.link || undefined,
+      criadoPor: user?.email || undefined,
+      dataCriacao: new Date().toISOString()
     }
     
     setVagaItems([...vagaItems, newItem])
@@ -353,8 +391,21 @@ export default function SolicitacaoVagas() {
       return
     }
     
+    // Preparar dados para exportação
+    const dadosParaExportar = vagaItems.map(item => ({
+      UF: item.uf,
+      Cidade: item.cidade,
+      'Código IBGE': item.codigo_ibge,
+      'Número de Vagas': item.vagas,
+      Cargo: item.cargo,
+      Bairro: item.bairro || '',
+      PCD: item.pcd ? 'Sim' : 'Não',
+      Link: item.link || ''
+    }))
+    
     // Aqui você implementaria a lógica para exportar para Excel
     // Por enquanto, apenas mostraremos uma mensagem
+    console.log('Dados para exportar:', dadosParaExportar)
     toast.success('Exportação para Excel iniciada!')
   }
 
@@ -390,17 +441,19 @@ export default function SolicitacaoVagas() {
                     name="uf"
                     value={formData.uf}
                     onChange={handleUfChange}
+                    disabled={loadingEstados}
                     className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                       errors.uf ? 'border-red-500' : 'border-gray-300'
-                    }`}
+                    } ${loadingEstados ? 'bg-gray-100' : ''}`}
                   >
                     <option value="">Selecione a UF</option>
-                    {UFS.map(uf => (
-                      <option key={uf.sigla} value={uf.sigla}>
-                        {uf.sigla} - {uf.nome}
+                    {estados.map(estado => (
+                      <option key={estado.sigla} value={estado.sigla}>
+                        {estado.sigla} - {estado.nome}
                       </option>
                     ))}
                   </select>
+                  {loadingEstados && <p className="mt-1 text-sm text-blue-500">Carregando estados...</p>}
                   {errors.uf && <p className="mt-1 text-sm text-red-500">{errors.uf}</p>}
                 </div>
 
@@ -414,18 +467,19 @@ export default function SolicitacaoVagas() {
                     name="cidade"
                     value={formData.cidade}
                     onChange={handleCidadeChange}
-                    disabled={!formData.uf}
+                    disabled={!formData.uf || loadingMunicipios}
                     className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                       errors.cidade ? 'border-red-500' : 'border-gray-300'
-                    } ${!formData.uf ? 'bg-gray-100' : ''}`}
+                    } ${!formData.uf || loadingMunicipios ? 'bg-gray-100' : ''}`}
                   >
                     <option value="">Selecione a cidade</option>
-                    {formData.uf && CIDADES_POR_UF[formData.uf].map(cidade => (
-                      <option key={cidade.codigoIBGE} value={cidade.nome}>
-                        {cidade.nome}
+                    {municipios.map(municipio => (
+                      <option key={municipio.id} value={municipio.nome}>
+                        {municipio.nome}
                       </option>
                     ))}
                   </select>
+                  {loadingMunicipios && <p className="mt-1 text-sm text-blue-500">Carregando cidades...</p>}
                   {errors.cidade && <p className="mt-1 text-sm text-red-500">{errors.cidade}</p>}
                 </div>
 
@@ -465,9 +519,12 @@ export default function SolicitacaoVagas() {
                   />
                   {errors.numeroVagas && <p className="mt-1 text-sm text-red-500">{errors.numeroVagas}</p>}
                 </div>
+              </div>
 
+              {/* Campos de Cargo, Bairro e Link em uma linha separada */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                 {/* Cargo */}
-                <div className="md:col-span-2">
+                <div>
                   <label htmlFor="cargo" className="block text-sm font-medium text-gray-700 mb-1">
                     Cargo <span className="text-red-500">*</span>
                   </label>
@@ -515,26 +572,6 @@ export default function SolicitacaoVagas() {
                   />
                 </div>
 
-                {/* PCD */}
-                <div>
-                  <label htmlFor="pcd" className="block text-sm font-medium text-gray-700 mb-1">
-                    PCD <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    id="pcd"
-                    name="pcd"
-                    value={formData.pcd.toString()}
-                    onChange={(e) => setFormData({...formData, pcd: e.target.value === 'true'})}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      errors.pcd ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                  >
-                    <option value="false">Não</option>
-                    <option value="true">Sim</option>
-                  </select>
-                  {errors.pcd && <p className="mt-1 text-sm text-red-500">{errors.pcd}</p>}
-                </div>
-
                 {/* Link */}
                 <div>
                   <label htmlFor="link" className="block text-sm font-medium text-gray-700 mb-1">
@@ -553,6 +590,24 @@ export default function SolicitacaoVagas() {
                   />
                   {errors.link && <p className="mt-1 text-sm text-red-500">{errors.link}</p>}
                 </div>
+              </div>
+
+              {/* PCD em uma linha separada */}
+              <div className="mt-4">
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="pcd"
+                    name="pcd"
+                    checked={formData.pcd}
+                    onChange={(e) => setFormData({...formData, pcd: e.target.checked})}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="pcd" className="ml-2 block text-sm font-medium text-gray-700">
+                    Pessoa com Deficiência (PCD) <span className="text-red-500">*</span>
+                  </label>
+                </div>
+                {errors.pcd && <p className="mt-1 text-sm text-red-500">{errors.pcd}</p>}
               </div>
 
               <div className="flex justify-end">
@@ -634,10 +689,10 @@ export default function SolicitacaoVagas() {
                           {item.cidade}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {item.codigoIBGE}
+                          {item.codigo_ibge}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {item.numeroVagas}
+                          {item.vagas}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {item.cargo}
