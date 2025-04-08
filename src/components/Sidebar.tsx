@@ -93,14 +93,14 @@ function Sidebar() {
           whileTap={{ scale: 0.98 }}
         >
           <div className="flex items-center">
-            <UserGroupIcon className="w-5 h-5 mr-3" />
-            <span className="text-sm font-medium">Equipe TI</span>
+            <UserGroupIcon className="w-5 h-5 mr-3 text-blue-400" />
+            <span className="text-sm font-medium bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Equipe TI</span>
           </div>
           <motion.div
             animate={{ rotate: isEquipeTIOpen ? 180 : 0 }}
             transition={{ duration: 0.2 }}
           >
-            <ChevronDownIcon className="w-5 h-5" />
+            <ChevronDownIcon className="w-5 h-5 text-blue-400" />
           </motion.div>
         </motion.button>
 
@@ -129,9 +129,9 @@ function Sidebar() {
                     }`}
                   >
                     <item.icon className={`w-5 h-5 mr-3 transition-transform duration-200 group-hover:scale-110 ${
-                      isActive(item.path) ? 'text-blue-400' : ''
+                      isActive(item.path) ? 'text-white' : 'text-gray-300'
                     }`} />
-                    <span className="text-sm font-medium">{item.label}</span>
+                    <span className={`text-sm font-medium ${isActive(item.path) ? 'text-white' : ''}`}>{item.label}</span>
                   </Link>
                 </motion.div>
               ))}
@@ -147,14 +147,14 @@ function Sidebar() {
           whileTap={{ scale: 0.98 }}
         >
           <div className="flex items-center">
-            <BriefcaseIcon className="w-5 h-5 mr-3" />
-            <span className="text-sm font-medium">Vagas</span>
+            <BriefcaseIcon className="w-5 h-5 mr-3 text-blue-400" />
+            <span className="text-sm font-medium bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Vagas</span>
           </div>
           <motion.div
             animate={{ rotate: isVagasOpen ? 180 : 0 }}
             transition={{ duration: 0.2 }}
           >
-            <ChevronDownIcon className="w-5 h-5" />
+            <ChevronDownIcon className="w-5 h-5 text-blue-400" />
           </motion.div>
         </motion.button>
 
@@ -183,9 +183,9 @@ function Sidebar() {
                     }`}
                   >
                     <item.icon className={`w-5 h-5 mr-3 transition-transform duration-200 group-hover:scale-110 ${
-                      isActive(item.path) ? 'text-blue-400' : ''
+                      isActive(item.path) ? 'text-white' : 'text-gray-300'
                     }`} />
-                    <span className="text-sm font-medium">{item.label}</span>
+                    <span className={`text-sm font-medium ${isActive(item.path) ? 'text-white' : ''}`}>{item.label}</span>
                   </Link>
                 </motion.div>
               ))}
