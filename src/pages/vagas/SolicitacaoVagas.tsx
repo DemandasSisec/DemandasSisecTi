@@ -18,30 +18,6 @@ interface MunicipioIBGE {
   nome: string
 }
 
-// Sugestões de cargos comuns
-const SUGESTOES_CARGOS = [
-  'Analista de Sistemas',
-  'Desenvolvedor',
-  'Engenheiro de Software',
-  'Analista de Suporte',
-  'Analista de Infraestrutura',
-  'Analista de Redes',
-  'Analista de Segurança',
-  'Analista de Dados',
-  'Cientista de Dados',
-  'Analista de BI',
-  'Analista de QA',
-  'Analista de Testes',
-  'Analista de Projetos',
-  'Gerente de TI',
-  'Arquiteto de Software',
-  'DevOps',
-  'DBA',
-  'Analista de Help Desk',
-  'Analista de Service Desk',
-  'Analista de NOC'
-]
-
 interface VagaItem {
   id: string
   uf: string
@@ -72,7 +48,7 @@ export default function SolicitacaoVagas() {
   const [loadingEstados, setLoadingEstados] = useState(false)
   const [loadingMunicipios, setLoadingMunicipios] = useState(false)
   
-  // Estado para o formulário
+  // Estados para o formulário
   const [formData, setFormData] = useState({
     uf: '',
     cidade: '',
@@ -85,14 +61,37 @@ export default function SolicitacaoVagas() {
     escolaridade: ''
   })
   
-  // Estado para controle de erros
-  const [errors, setErrors] = useState<Record<string, string>>({})
+  // Estado para erros de validação
+  const [errors, setErrors] = useState<{
+    uf: string;
+    cidade: string;
+    codigoIBGE: string;
+    numeroVagas: string;
+    cargo: string;
+    bairro: string;
+    pcd: string;
+    link: string;
+    escolaridade: string;
+  }>({
+    uf: '',
+    cidade: '',
+    codigoIBGE: '',
+    numeroVagas: '',
+    cargo: '',
+    bairro: '',
+    pcd: '',
+    link: '',
+    escolaridade: ''
+  })
   
-  // Estado para sugestões de cargos filtradas
-  const [cargoSuggestions, setCargoSuggestions] = useState<string[]>([])
+  // Estado para controlar o modal
+  const [isModalOpen, setIsModalOpen] = useState(false)
   
-  // Estado para mostrar/esconder sugestões de cargos
-  const [showCargoSuggestions, setShowCargoSuggestions] = useState(false)
+  // Estado para controlar o loading
+  const [isLoading, setIsLoading] = useState(false)
+  
+  // Estado para controlar a mensagem de sucesso
+  const [successMessage, setSuccessMessage] = useState('')
 
   // Carregar dados do localStorage ao iniciar
   useEffect(() => {
@@ -254,40 +253,24 @@ export default function SolicitacaoVagas() {
     }
   }
 
-  // Função para lidar com mudanças nos campos do formulário
+  // Função para lidar com mudanças nos campos
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target
+    const { name, value } = e.target;
     
-    if (type === 'checkbox') {
-      const checkbox = e.target as HTMLInputElement
-      setFormData({
-        ...formData,
-        [name]: checkbox.checked
-      })
-    } else {
-      setFormData({
-        ...formData,
-        [name]: value
-      })
-    }
+    // Atualiza o estado do formulário
+    setFormData({
+      ...formData,
+      [name]: value
+    });
     
-    // Limpar erro do campo quando o usuário digita
-    if (errors[name]) {
+    // Limpa o erro do campo quando o usuário começa a digitar
+    if (errors[name as keyof typeof errors]) {
       setErrors({
         ...errors,
         [name]: ''
-      })
+      });
     }
-    
-    // Filtrar sugestões de cargos
-    if (name === 'cargo') {
-      const filtered = SUGESTOES_CARGOS.filter(cargo => 
-        cargo.toLowerCase().includes(value.toLowerCase())
-      )
-      setCargoSuggestions(filtered)
-      setShowCargoSuggestions(true)
-    }
-  }
+  };
   
   // Função para lidar com mudança de UF
   const handleUfChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -337,41 +320,31 @@ export default function SolicitacaoVagas() {
     }
   }
   
-  // Função para selecionar uma sugestão de cargo
-  const handleCargoSuggestionClick = (cargo: string) => {
-    setFormData({
-      ...formData,
-      cargo
-    })
-    setShowCargoSuggestions(false)
-  }
-  
   // Função para validar o formulário
   const validateForm = () => {
-    const newErrors: Record<string, string> = {}
+    const newErrors = {
+      uf: '',
+      cidade: '',
+      codigoIBGE: '',
+      numeroVagas: '',
+      cargo: '',
+      bairro: '',
+      pcd: '',
+      link: '',
+      escolaridade: ''
+    }
     
-    if (!formData.uf) newErrors.uf = 'UF é obrigatória'
+    if (!formData.uf) newErrors.uf = 'UF é obrigatório'
     if (!formData.cidade) newErrors.cidade = 'Cidade é obrigatória'
     if (!formData.codigoIBGE) newErrors.codigoIBGE = 'Código IBGE é obrigatório'
     if (!formData.numeroVagas) newErrors.numeroVagas = 'Número de vagas é obrigatório'
-    if (isNaN(Number(formData.numeroVagas)) || Number(formData.numeroVagas) <= 0) {
-      newErrors.numeroVagas = 'Número de vagas deve ser um número positivo'
-    }
     if (!formData.cargo) newErrors.cargo = 'Cargo é obrigatório'
+    if (!formData.bairro) newErrors.bairro = 'Bairro é obrigatório'
+    if (formData.pcd === undefined) newErrors.pcd = 'PCD é obrigatório'
     if (!formData.escolaridade) newErrors.escolaridade = 'Escolaridade é obrigatória'
     
-    // Validar PCD - garantir que o usuário fez uma escolha explícita
-    if (formData.pcd === undefined) {
-      newErrors.pcd = 'Selecione se é PCD ou não'
-    }
-    
-    // Validar URL se fornecida
-    if (formData.link && !isValidUrl(formData.link)) {
-      newErrors.link = 'URL inválida'
-    }
-    
     setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
+    return Object.values(newErrors).every(error => error === '')
   }
   
   // Função para validar URL
@@ -384,75 +357,48 @@ export default function SolicitacaoVagas() {
     }
   }
   
-  // Função para adicionar item à lista
+  // Função para adicionar um item à lista
   const handleAddItem = () => {
-    if (!validateForm()) return
-    
-    // Verificar se o campo PCD foi preenchido
-    if (formData.pcd === undefined) {
-      toast.error('Selecione se é PCD ou não')
-      return
+    if (validateForm()) {
+      const newItem: VagaItem = {
+        id: Date.now().toString(),
+        uf: formData.uf,
+        cidade: formData.cidade,
+        codigo_ibge: parseInt(formData.codigoIBGE),
+        vagas: parseInt(formData.numeroVagas),
+        cargo: formData.cargo,
+        bairro: formData.bairro,
+        pcd: formData.pcd,
+        link: formData.link,
+        escolaridade: mapearEscolaridadeParaSigla(formData.escolaridade),
+        escolaridade_texto: formData.escolaridade,
+        criadoPor: user?.email || '',
+        dataCriacao: new Date().toISOString()
+      }
+      
+      const updatedItems = [...vagaItems, newItem]
+      setVagaItems(updatedItems)
+      localStorage.setItem('vagaItems', JSON.stringify(updatedItems))
+      
+      // Limpar o formulário
+      setFormData({
+        uf: '',
+        cidade: '',
+        codigoIBGE: '',
+        numeroVagas: '',
+        cargo: '',
+        bairro: '',
+        pcd: false,
+        link: '',
+        escolaridade: ''
+      })
+      
+      // Fechar o modal
+      setIsModalOpen(false)
+      
+      // Mostrar mensagem de sucesso
+      toast.success('Vaga adicionada com sucesso!')
     }
-    
-    // Gerar um ID único para o item
-    const newId = ID.unique()
-    console.log('Adicionando item com ID:', newId)
-    
-    // Mapear o valor da escolaridade para a sigla correspondente
-    const escolaridadeMap: Record<string, string> = {
-      'Analfabeto': 'ANF',
-      'Fundamental Incompleto': 'EFI',
-      'Fundamental Completo': 'EFC',
-      'Médio Incompleto': 'EMI',
-      'Médio Completo': 'EMC',
-      'Superior Incompleto': 'ESI',
-      'Superior Completo': 'ESC',
-      'Pós-graduação': 'ES+',
-      'Mestrado': 'ES+',
-      'Doutorado': 'ES+'
-    }
-    
-    const newItem: VagaItem = {
-      id: newId,
-      uf: formData.uf,
-      cidade: formData.cidade,
-      codigo_ibge: parseInt(formData.codigoIBGE),
-      vagas: Number(formData.numeroVagas),
-      cargo: formData.cargo,
-      bairro: formData.bairro || undefined,
-      pcd: formData.pcd,
-      link: formData.link || undefined,
-      escolaridade: escolaridadeMap[formData.escolaridade] || '',
-      escolaridade_texto: formData.escolaridade,
-      criadoPor: user?.email || undefined,
-      dataCriacao: new Date().toISOString()
-    }
-    
-    console.log('Novo item a ser adicionado:', newItem)
-    console.log('Itens antes da adição:', vagaItems)
-    
-    // Criar uma nova lista com o item adicionado
-    const updatedItems = [...vagaItems, newItem]
-    
-    console.log('Itens após a adição:', updatedItems)
-    
-    // Atualizar o estado com a nova lista
-    setVagaItems(updatedItems)
-    
-    // Limpar formulário
-    setFormData({
-      uf: '',
-      cidade: '',
-      codigoIBGE: '',
-      numeroVagas: '',
-      cargo: '',
-      bairro: '',
-      pcd: false,
-      link: '',
-      escolaridade: ''
-    })
-    
-    toast.success('Item adicionado com sucesso!')
   }
   
   // Função para remover item da lista
@@ -565,6 +511,19 @@ export default function SolicitacaoVagas() {
       link: '',
       escolaridade: ''
     })
+  }
+
+  // Função para mapear a escolaridade para a sigla
+  const mapearEscolaridadeParaSigla = (escolaridade: string): string => {
+    const mapeamento: Record<string, string> = {
+      'Ensino Fundamental Completo': 'EFC',
+      'Ensino Médio Incompleto': 'EMI',
+      'Ensino Médio Completo': 'EMC',
+      'Ensino Superior Incompleto': 'ESI',
+      'Ensino Superior Completo': 'ESC',
+      'Ensino Superior ou maior': 'ES+'
+    }
+    return mapeamento[escolaridade] || escolaridade
   }
 
   return (
@@ -711,24 +670,10 @@ export default function SolicitacaoVagas() {
                       name="cargo"
                       value={formData.cargo}
                       onChange={handleInputChange}
-                      onFocus={() => setShowCargoSuggestions(true)}
                       className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                         errors.cargo ? 'border-red-500' : 'border-gray-300'
                       }`}
                     />
-                    {showCargoSuggestions && cargoSuggestions.length > 0 && (
-                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                        {cargoSuggestions.map((cargo, index) => (
-                          <div
-                            key={index}
-                            className="px-3 py-2 hover:bg-blue-50 cursor-pointer"
-                            onClick={() => handleCargoSuggestionClick(cargo)}
-                          >
-                            {cargo}
-                          </div>
-                        ))}
-                      </div>
-                    )}
                   </div>
                   {errors.cargo && <p className="mt-1 text-sm text-red-500">{errors.cargo}</p>}
                 </div>
@@ -739,7 +684,6 @@ export default function SolicitacaoVagas() {
                     Escolaridade Mínima <span className="text-red-500">*</span>
                   </label>
                   <select
-                    id="escolaridade"
                     name="escolaridade"
                     value={formData.escolaridade}
                     onChange={handleInputChange}
@@ -748,16 +692,12 @@ export default function SolicitacaoVagas() {
                     }`}
                   >
                     <option value="">Selecione a escolaridade</option>
-                    <option value="Analfabeto">Analfabeto</option>
-                    <option value="Fundamental Incompleto">Fundamental Incompleto</option>
-                    <option value="Fundamental Completo">Fundamental Completo</option>
-                    <option value="Médio Incompleto">Médio Incompleto</option>
-                    <option value="Médio Completo">Médio Completo</option>
-                    <option value="Superior Incompleto">Superior Incompleto</option>
-                    <option value="Superior Completo">Superior Completo</option>
-                    <option value="Pós-graduação">Pós-graduação</option>
-                    <option value="Mestrado">Mestrado</option>
-                    <option value="Doutorado">Doutorado</option>
+                    <option value="Ensino Fundamental Completo">Ensino Fundamental Completo</option>
+                    <option value="Ensino Médio Incompleto">Ensino Médio Incompleto</option>
+                    <option value="Ensino Médio Completo">Ensino Médio Completo</option>
+                    <option value="Ensino Superior Incompleto">Ensino Superior Incompleto</option>
+                    <option value="Ensino Superior Completo">Ensino Superior Completo</option>
+                    <option value="Ensino Superior ou maior">Ensino Superior ou maior</option>
                   </select>
                   {errors.escolaridade && <p className="mt-1 text-sm text-red-500">{errors.escolaridade}</p>}
                 </div>
