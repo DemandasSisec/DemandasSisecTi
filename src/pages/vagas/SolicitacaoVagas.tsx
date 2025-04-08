@@ -4,7 +4,7 @@ import { databases, storage } from '../../config/appwrite'
 import { APPWRITE_CONFIG } from '../../config/appwrite'
 import { ID } from 'appwrite'
 import { useAuth } from '../../contexts/AuthContext'
-import { ArrowDownTrayIcon, ArrowUpTrayIcon, InformationCircleIcon, CheckCircleIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline'
+import { ArrowDownTrayIcon, ArrowUpTrayIcon, InformationCircleIcon, CheckCircleIcon, PlusIcon, TrashIcon, CloudArrowUpIcon } from '@heroicons/react/24/outline'
 
 // Interface para os dados da API do IBGE
 interface EstadoIBGE {
@@ -50,7 +50,7 @@ interface VagaItem {
   vagas: number
   cargo: string
   bairro?: string
-  pcd: boolean
+  pcd: boolean | undefined
   link?: string
   criadoPor?: string
   dataCriacao?: string
@@ -59,6 +59,7 @@ interface VagaItem {
 export default function SolicitacaoVagas() {
   const { user } = useAuth()
   const [loading, setLoading] = useState(false)
+  const [saving, setSaving] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [vagaItems, setVagaItems] = useState<VagaItem[]>([])
   
@@ -76,7 +77,7 @@ export default function SolicitacaoVagas() {
     numeroVagas: '',
     cargo: '',
     bairro: '',
-    pcd: false,
+    pcd: undefined as boolean | undefined,
     link: ''
   })
   
@@ -88,6 +89,36 @@ export default function SolicitacaoVagas() {
   
   // Estado para mostrar/esconder sugestões de cargos
   const [showCargoSuggestions, setShowCargoSuggestions] = useState(false)
+
+  // Carregar dados do localStorage ao iniciar
+  useEffect(() => {
+    console.log('Tentando carregar dados do localStorage')
+    const savedItems = localStorage.getItem('vagaItems')
+    console.log('Dados encontrados no localStorage:', savedItems)
+    
+    if (savedItems) {
+      try {
+        const parsedItems = JSON.parse(savedItems)
+        console.log('Dados parseados do localStorage:', parsedItems)
+        setVagaItems(parsedItems)
+      } catch (error) {
+        console.error('Erro ao carregar itens do localStorage:', error)
+      }
+    } else {
+      console.log('Nenhum dado encontrado no localStorage')
+    }
+  }, [])
+
+  // Salvar no localStorage quando vagaItems mudar
+  useEffect(() => {
+    console.log('Salvando no localStorage:', vagaItems)
+    try {
+      localStorage.setItem('vagaItems', JSON.stringify(vagaItems))
+      console.log('Dados salvos com sucesso no localStorage')
+    } catch (error) {
+      console.error('Erro ao salvar no localStorage:', error)
+    }
+  }, [vagaItems])
 
   // Carregar estados ao montar o componente
   useEffect(() => {
@@ -324,6 +355,11 @@ export default function SolicitacaoVagas() {
     }
     if (!formData.cargo) newErrors.cargo = 'Cargo é obrigatório'
     
+    // Validar PCD - garantir que o usuário fez uma escolha explícita
+    if (formData.pcd === undefined) {
+      newErrors.pcd = 'Selecione se é PCD ou não'
+    }
+    
     // Validar URL se fornecida
     if (formData.link && !isValidUrl(formData.link)) {
       newErrors.link = 'URL inválida'
@@ -347,8 +383,18 @@ export default function SolicitacaoVagas() {
   const handleAddItem = () => {
     if (!validateForm()) return
     
+    // Verificar se o campo PCD foi preenchido
+    if (formData.pcd === undefined) {
+      toast.error('Selecione se é PCD ou não')
+      return
+    }
+    
+    // Gerar um ID único para o item
+    const newId = ID.unique()
+    console.log('Adicionando item com ID:', newId)
+    
     const newItem: VagaItem = {
-      id: ID.unique(),
+      id: newId,
       uf: formData.uf,
       cidade: formData.cidade,
       codigo_ibge: parseInt(formData.codigoIBGE),
@@ -361,7 +407,16 @@ export default function SolicitacaoVagas() {
       dataCriacao: new Date().toISOString()
     }
     
-    setVagaItems([...vagaItems, newItem])
+    console.log('Novo item a ser adicionado:', newItem)
+    console.log('Itens antes da adição:', vagaItems)
+    
+    // Criar uma nova lista com o item adicionado
+    const updatedItems = [...vagaItems, newItem]
+    
+    console.log('Itens após a adição:', updatedItems)
+    
+    // Atualizar o estado com a nova lista
+    setVagaItems(updatedItems)
     
     // Limpar formulário
     setFormData({
@@ -371,7 +426,7 @@ export default function SolicitacaoVagas() {
       numeroVagas: '',
       cargo: '',
       bairro: '',
-      pcd: false,
+      pcd: undefined,
       link: ''
     })
     
@@ -380,7 +435,25 @@ export default function SolicitacaoVagas() {
   
   // Função para remover item da lista
   const handleRemoveItem = (id: string) => {
-    setVagaItems(vagaItems.filter(item => item.id !== id))
+    console.log('Removendo item com ID:', id)
+    console.log('Itens antes da remoção:', vagaItems)
+    
+    // Verificar se o ID existe na lista
+    const itemExists = vagaItems.some(item => item.id === id)
+    if (!itemExists) {
+      console.error('Item não encontrado na lista:', id)
+      toast.error('Item não encontrado')
+      return
+    }
+    
+    // Criar uma nova lista com o item removido
+    const updatedItems = vagaItems.filter(item => item.id !== id)
+    
+    console.log('Itens após a remoção:', updatedItems)
+    
+    // Atualizar o estado com a nova lista
+    setVagaItems(updatedItems)
+    
     toast.success('Item removido com sucesso!')
   }
   
@@ -407,6 +480,51 @@ export default function SolicitacaoVagas() {
     // Por enquanto, apenas mostraremos uma mensagem
     console.log('Dados para exportar:', dadosParaExportar)
     toast.success('Exportação para Excel iniciada!')
+  }
+
+  // Função para salvar no banco de dados
+  const handleSaveToDatabase = async () => {
+    if (vagaItems.length === 0) {
+      toast.error('Não há itens para salvar')
+      return
+    }
+
+    console.log('Iniciando salvamento no banco de dados:', vagaItems)
+    setSaving(true)
+    
+    try {
+      // Criar documento com as vagas
+      const result = await databases.createDocument(
+        APPWRITE_CONFIG.databaseId,
+        APPWRITE_CONFIG.collections.VAGAS,
+        ID.unique(),
+        {
+          titulo: `Solicitação de Vagas - ${new Date().toLocaleDateString()}`,
+          created_at: new Date().toISOString(),
+          requester_id: user?.$id,
+          status: 'pending',
+          vagas: vagaItems
+        }
+      )
+      
+      console.log('Documento criado com sucesso:', result)
+
+      // Limpar o localStorage após salvar com sucesso
+      localStorage.removeItem('vagaItems')
+      console.log('LocalStorage limpo após salvamento')
+      
+      toast.success('Vagas salvas com sucesso!')
+      
+      // Limpar a lista de itens após salvar
+      setVagaItems([])
+      console.log('Lista de itens limpa após salvamento')
+      
+    } catch (error) {
+      console.error('Erro ao salvar vagas:', error)
+      toast.error('Erro ao salvar vagas')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -594,18 +712,36 @@ export default function SolicitacaoVagas() {
 
               {/* PCD em uma linha separada */}
               <div className="mt-4">
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="pcd"
-                    name="pcd"
-                    checked={formData.pcd}
-                    onChange={(e) => setFormData({...formData, pcd: e.target.checked})}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="pcd" className="ml-2 block text-sm font-medium text-gray-700">
-                    Pessoa com Deficiência (PCD) <span className="text-red-500">*</span>
-                  </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Pessoa com Deficiência (PCD) <span className="text-red-500">*</span>
+                </label>
+                <div className="flex space-x-4">
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="pcd-sim"
+                      name="pcd-sim"
+                      checked={formData.pcd === true}
+                      onChange={() => setFormData({...formData, pcd: true})}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="pcd-sim" className="ml-2 block text-sm font-medium text-gray-700">
+                      Sim
+                    </label>
+                  </div>
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="pcd-nao"
+                      name="pcd-nao"
+                      checked={formData.pcd === false}
+                      onChange={() => setFormData({...formData, pcd: false})}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="pcd-nao" className="ml-2 block text-sm font-medium text-gray-700">
+                      Não
+                    </label>
+                  </div>
                 </div>
                 {errors.pcd && <p className="mt-1 text-sm text-red-500">{errors.pcd}</p>}
               </div>
@@ -629,15 +765,27 @@ export default function SolicitacaoVagas() {
               <h2 className="text-xl font-semibold text-gray-900">
                 02. Lista de Vagas
               </h2>
-              {vagaItems.length > 0 && (
-                <button
-                  onClick={handleExportToExcel}
-                  className="flex items-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors shadow-md hover:shadow-lg"
-                >
-                  <ArrowDownTrayIcon className="w-5 h-5 mr-2" />
-                  Exportar para Excel
-                </button>
-              )}
+              <div className="flex space-x-2">
+                {vagaItems.length > 0 && (
+                  <>
+                    <button
+                      onClick={handleExportToExcel}
+                      className="flex items-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors shadow-md hover:shadow-lg"
+                    >
+                      <ArrowDownTrayIcon className="w-5 h-5 mr-2" />
+                      Exportar para Excel
+                    </button>
+                    <button
+                      onClick={handleSaveToDatabase}
+                      disabled={saving}
+                      className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <CloudArrowUpIcon className="w-5 h-5 mr-2" />
+                      {saving ? 'Enviando...' : 'Enviar dados'}
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
 
             {vagaItems.length === 0 ? (
@@ -701,7 +849,7 @@ export default function SolicitacaoVagas() {
                           {item.bairro || '-'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {item.pcd ? 'Sim' : 'Não'}
+                          {item.pcd === undefined ? '-' : (item.pcd ? 'Sim' : 'Não')}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {item.link ? (
@@ -729,83 +877,6 @@ export default function SolicitacaoVagas() {
                 </table>
               </div>
             )}
-          </div>
-
-          {/* 03. Importante */}
-          <div className="bg-blue-50 rounded-xl p-6 border border-blue-100">
-            <div className="flex items-start space-x-3">
-              <InformationCircleIcon className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                  03. Importante: Padrões para preenchimento
-                </h2>
-                
-                {/* Tabela de Campos */}
-                <div className="overflow-x-auto">
-                  <table className="min-w-full bg-white rounded-lg overflow-hidden">
-                    <thead className="bg-blue-500 text-white">
-                      <tr>
-                        <th className="px-4 py-2 text-left">Campo</th>
-                        <th className="px-4 py-2 text-left">Formato Esperado</th>
-                        <th className="px-4 py-2 text-left">Obrigatório</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-blue-100">
-                      <tr>
-                        <td className="px-4 py-2 font-medium">UF</td>
-                        <td className="px-4 py-2">Sigla do estado (Ex: SP, RJ, MG)</td>
-                        <td className="px-4 py-2 text-blue-600">Sim</td>
-                      </tr>
-                      <tr>
-                        <td className="px-4 py-2 font-medium">Cidade</td>
-                        <td className="px-4 py-2">Nome completo (Ex: São Paulo, Rio de Janeiro)</td>
-                        <td className="px-4 py-2 text-blue-600">Sim</td>
-                      </tr>
-                      <tr>
-                        <td className="px-4 py-2 font-medium">Código IBGE</td>
-                        <td className="px-4 py-2">Código numérico do município</td>
-                        <td className="px-4 py-2 text-blue-600">Sim</td>
-                      </tr>
-                      <tr>
-                        <td className="px-4 py-2 font-medium">Número de Vagas</td>
-                        <td className="px-4 py-2">Número inteiro (Ex: 1, 2, 3)</td>
-                        <td className="px-4 py-2 text-blue-600">Sim</td>
-                      </tr>
-                      <tr>
-                        <td className="px-4 py-2 font-medium">Cargo</td>
-                        <td className="px-4 py-2">Nome do cargo por extenso</td>
-                        <td className="px-4 py-2 text-blue-600">Sim</td>
-                      </tr>
-                      <tr>
-                        <td className="px-4 py-2 font-medium">Bairro</td>
-                        <td className="px-4 py-2">Nome do bairro ou região</td>
-                        <td className="px-4 py-2 text-gray-500">Não</td>
-                      </tr>
-                      <tr>
-                        <td className="px-4 py-2 font-medium">PCD</td>
-                        <td className="px-4 py-2">"Sim" ou "Não"</td>
-                        <td className="px-4 py-2 text-blue-600">Sim</td>
-                      </tr>
-                      <tr>
-                        <td className="px-4 py-2 font-medium">Link</td>
-                        <td className="px-4 py-2">URL completa da vaga</td>
-                        <td className="px-4 py-2 text-gray-500">Não</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Observações */}
-                <div className="mt-4">
-                  <p className="font-medium mb-2">Observações:</p>
-                  <ul className="list-disc list-inside space-y-1 text-blue-700 ml-2">
-                    <li>Preencha todos os campos obrigatórios</li>
-                    <li>Respeite o formato de cada campo conforme indicado</li>
-                    <li>O código IBGE é preenchido automaticamente ao selecionar a cidade</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>

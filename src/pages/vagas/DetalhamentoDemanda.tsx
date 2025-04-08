@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { StatusTimeline } from '../../components/StatusTimeline'
-import { ChevronLeftIcon, PaperClipIcon, TrashIcon, ArrowUpTrayIcon } from '@heroicons/react/24/outline'
+import { ChevronLeftIcon, PaperClipIcon, TrashIcon, ArrowUpTrayIcon, PlusIcon } from '@heroicons/react/24/outline'
 import { Dialog, Transition } from '@headlessui/react'
 import { Fragment } from 'react'
 
@@ -32,20 +32,48 @@ const demandaMock = {
 
 // Adicione os mocks dos novos arquivos
 const arquivosMock = {
-  empresaOriginal: {
-    id: "1",
-    nome: "Lista_Candidatos_TechCorp.xlsx",
-    tamanho: "2.5 MB",
-    data: "2024-04-02T14:30:00"
-  },
+  vagasCadastradas: [
+    {
+      id: "1",
+      uf: "SP",
+      cidade: "São Paulo",
+      codigo_ibge: 3550308,
+      vagas: 3,
+      cargo: "Desenvolvedor Full Stack",
+      bairro: "Vila Mariana",
+      pcd: false,
+      link: "https://exemplo.com/vaga1"
+    },
+    {
+      id: "2",
+      uf: "RJ",
+      cidade: "Rio de Janeiro",
+      codigo_ibge: 3304557,
+      vagas: 2,
+      cargo: "Analista de Sistemas",
+      bairro: "Barra da Tijuca",
+      pcd: true,
+      link: "https://exemplo.com/vaga2"
+    }
+  ],
   envioOuvidoria: {
     id: "2",
     nome: "Envio_Ouvidoria_TechCorp.pdf",
     tamanho: "1.8 MB",
     data: "2024-04-03T10:15:00"
   },
-  retornoOuvidoria: null,
-  candidatosInteressados: null
+  retornoOuvidoria: null as {
+    id: string;
+    nome: string;
+    tamanho: string;
+    data: string;
+  } | null,
+  candidatosInteressados: null as {
+    id: string;
+    nome: string;
+    tamanho: string;
+    data: string;
+  } | null
 }
 
 export default function DetalhamentoDemanda() {
@@ -59,6 +87,17 @@ export default function DetalhamentoDemanda() {
     responsavel: 'Lucas Fontoura'
   })
   const [isEditing, setIsEditing] = useState(false)
+  const [showAddVagaModal, setShowAddVagaModal] = useState(false)
+  const [newVaga, setNewVaga] = useState({
+    uf: '',
+    cidade: '',
+    codigo_ibge: '',
+    vagas: '',
+    cargo: '',
+    bairro: '',
+    pcd: false,
+    link: ''
+  })
 
   const handleStatusChange = async (newStatus: number) => {
     try {
@@ -98,6 +137,40 @@ export default function DetalhamentoDemanda() {
       responsavel: 'Lucas Fontoura'
     })
     setIsEditing(true)
+  }
+
+  const handleAddVaga = () => {
+    // Aqui virá a lógica para adicionar uma nova vaga
+    console.log('Adicionando vaga:', newVaga)
+    setShowAddVagaModal(false)
+    // Limpar formulário
+    setNewVaga({
+      uf: '',
+      cidade: '',
+      codigo_ibge: '',
+      vagas: '',
+      cargo: '',
+      bairro: '',
+      pcd: false,
+      link: ''
+    })
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target
+    
+    if (type === 'checkbox') {
+      const checkbox = e.target as HTMLInputElement
+      setNewVaga({
+        ...newVaga,
+        [name]: checkbox.checked
+      })
+    } else {
+      setNewVaga({
+        ...newVaga,
+        [name]: value
+      })
+    }
   }
 
   if (loading) {
@@ -238,34 +311,32 @@ export default function DetalhamentoDemanda() {
             )}
           </div>
 
-          {/* Grid de Cards de Arquivos */}
-          <div className="grid grid-cols-2 gap-6 flex-1">
-            {/* Arquivo Original da Empresa */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Arquivo Original da Empresa</h2>
-              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <div className="flex items-center space-x-3">
-                  <PaperClipIcon className="h-5 w-5 text-gray-400" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">{arquivosMock.empresaOriginal.nome}</p>
-                    <div className="flex items-center text-xs text-gray-500 space-x-2">
-                      <span>{arquivosMock.empresaOriginal.tamanho}</span>
-                      <span>•</span>
-                      <span>{new Date(arquivosMock.empresaOriginal.data).toLocaleDateString('pt-BR')}</span>
-                    </div>
+          {/* Vagas Cadastradas */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">Informações da Solicitação</h2>
+            </div>
+            
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <svg className="h-6 w-6 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-blue-800">ID da Solicitação no Banco de Dados</h3>
+                  <div className="mt-2 text-sm text-blue-700">
+                    <p className="font-mono text-lg font-bold">{demandaMock.id}</p>
+                    <p className="mt-1">Este ID pode ser usado para referência em outras partes do sistema.</p>
                   </div>
                 </div>
               </div>
-              <div className="flex justify-end mt-4">
-                <button
-                  onClick={() => handleDownload(arquivosMock.empresaOriginal.id, arquivosMock.empresaOriginal.nome)}
-                  className="px-4 py-2 text-sm text-white bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all duration-200"
-                >
-                  Baixar
-                </button>
-              </div>
             </div>
+          </div>
 
+          {/* Grid de Cards de Arquivos */}
+          <div className="grid grid-cols-2 gap-6 flex-1">
             {/* Enviado para Ouvidoria */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Enviado para Ouvidoria</h2>
@@ -333,13 +404,13 @@ export default function DetalhamentoDemanda() {
                   </div>
                   <div className="flex items-center space-x-2">
                     <button
-                      onClick={() => handleDownload(arquivosMock.retornoOuvidoria.id, arquivosMock.retornoOuvidoria.nome)}
+                      onClick={() => handleDownload(arquivosMock.retornoOuvidoria!.id, arquivosMock.retornoOuvidoria!.nome)}
                       className="px-4 py-2 text-sm text-white bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all duration-200"
                     >
                       Baixar
                     </button>
                     <button
-                      onClick={() => handleDelete(arquivosMock.retornoOuvidoria.id)}
+                      onClick={() => handleDelete(arquivosMock.retornoOuvidoria!.id)}
                       className="p-2 text-gray-400 hover:text-red-500 transition-colors"
                     >
                       <TrashIcon className="h-5 w-5" />
@@ -378,13 +449,13 @@ export default function DetalhamentoDemanda() {
                   </div>
                   <div className="flex items-center space-x-2">
                     <button
-                      onClick={() => handleDownload(arquivosMock.candidatosInteressados.id, arquivosMock.candidatosInteressados.nome)}
+                      onClick={() => handleDownload(arquivosMock.candidatosInteressados!.id, arquivosMock.candidatosInteressados!.nome)}
                       className="px-4 py-2 text-sm text-white bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all duration-200"
                     >
                       Baixar
                     </button>
                     <button
-                      onClick={() => handleDelete(arquivosMock.candidatosInteressados.id)}
+                      onClick={() => handleDelete(arquivosMock.candidatosInteressados!.id)}
                       className="p-2 text-gray-400 hover:text-red-500 transition-colors"
                     >
                       <TrashIcon className="h-5 w-5" />
@@ -478,6 +549,183 @@ export default function DetalhamentoDemanda() {
                       onClick={() => setIsStatusModalOpen(false)}
                     >
                       Cancelar
+                    </button>
+                  </div>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
+
+      {/* Modal de Adicionar Vaga */}
+      <Transition appear show={showAddVagaModal} as={Fragment}>
+        <Dialog 
+          as="div" 
+          className="relative z-10" 
+          onClose={() => setShowAddVagaModal(false)}
+        >
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black bg-opacity-25" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4 text-center">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                  <Dialog.Title
+                    as="h3"
+                    className="text-lg font-medium leading-6 text-gray-900 mb-4"
+                  >
+                    Adicionar Nova Vaga
+                  </Dialog.Title>
+                  
+                  <div className="mt-4 grid grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="uf" className="block text-sm font-medium text-gray-700 mb-1">
+                        UF <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        id="uf"
+                        name="uf"
+                        value={newVaga.uf}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label htmlFor="cidade" className="block text-sm font-medium text-gray-700 mb-1">
+                        Cidade <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        id="cidade"
+                        name="cidade"
+                        value={newVaga.cidade}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label htmlFor="codigo_ibge" className="block text-sm font-medium text-gray-700 mb-1">
+                        Código IBGE <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        id="codigo_ibge"
+                        name="codigo_ibge"
+                        value={newVaga.codigo_ibge}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label htmlFor="vagas" className="block text-sm font-medium text-gray-700 mb-1">
+                        Número de Vagas <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        id="vagas"
+                        name="vagas"
+                        value={newVaga.vagas}
+                        onChange={handleInputChange}
+                        min="1"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label htmlFor="cargo" className="block text-sm font-medium text-gray-700 mb-1">
+                        Cargo <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        id="cargo"
+                        name="cargo"
+                        value={newVaga.cargo}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label htmlFor="bairro" className="block text-sm font-medium text-gray-700 mb-1">
+                        Bairro
+                      </label>
+                      <input
+                        type="text"
+                        id="bairro"
+                        name="bairro"
+                        value={newVaga.bairro}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label htmlFor="link" className="block text-sm font-medium text-gray-700 mb-1">
+                        Link
+                      </label>
+                      <input
+                        type="text"
+                        id="link"
+                        name="link"
+                        value={newVaga.link}
+                        onChange={handleInputChange}
+                        placeholder="https://..."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    
+                    <div className="flex items-center mt-2">
+                      <input
+                        type="checkbox"
+                        id="pcd"
+                        name="pcd"
+                        checked={newVaga.pcd}
+                        onChange={(e) => setNewVaga({...newVaga, pcd: e.target.checked})}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <label htmlFor="pcd" className="ml-2 block text-sm font-medium text-gray-700">
+                        Pessoa com Deficiência (PCD)
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 flex justify-end space-x-3">
+                    <button
+                      type="button"
+                      className="inline-flex justify-center rounded-lg px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
+                      onClick={() => setShowAddVagaModal(false)}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      className="inline-flex justify-center rounded-lg px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                      onClick={handleAddVaga}
+                    >
+                      Adicionar
                     </button>
                   </div>
                 </Dialog.Panel>
