@@ -80,7 +80,7 @@ export default function SolicitacaoVagas() {
     numeroVagas: '',
     cargo: '',
     bairro: '',
-    pcd: undefined as boolean | undefined,
+    pcd: false,
     link: '',
     escolaridade: ''
   })
@@ -447,7 +447,7 @@ export default function SolicitacaoVagas() {
       numeroVagas: '',
       cargo: '',
       bairro: '',
-      pcd: undefined,
+      pcd: false,
       link: '',
       escolaridade: ''
     })
@@ -561,7 +561,7 @@ export default function SolicitacaoVagas() {
       numeroVagas: '',
       cargo: '',
       bairro: '',
-      pcd: undefined,
+      pcd: false,
       link: '',
       escolaridade: ''
     })
@@ -747,7 +747,7 @@ export default function SolicitacaoVagas() {
                       errors.escolaridade ? 'border-red-500' : 'border-gray-300'
                     }`}
                   >
-                    <option value="">Selecione a escolaridade mínima</option>
+                    <option value="">Selecione a escolaridade</option>
                     <option value="Analfabeto">Analfabeto</option>
                     <option value="Fundamental Incompleto">Fundamental Incompleto</option>
                     <option value="Fundamental Completo">Fundamental Completo</option>
@@ -803,26 +803,24 @@ export default function SolicitacaoVagas() {
                   Pessoa com Deficiência (PCD) <span className="text-red-500">*</span>
                 </label>
                 <div className="flex items-center space-x-4">
-                  <div className="flex items-center">
-                    <span className="text-sm font-medium text-gray-700 mr-2">Não</span>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={formData.pcd === true}
-                      onClick={() => setFormData({...formData, pcd: true})}
-                      className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                        formData.pcd === true ? 'bg-blue-600' : 'bg-gray-200'
+                  <span className="text-sm font-medium text-gray-700">Não</span>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={formData.pcd === true}
+                    onClick={() => setFormData({...formData, pcd: !formData.pcd})}
+                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                      formData.pcd === true ? 'bg-blue-600' : 'bg-gray-200'
+                    }`}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                        formData.pcd === true ? 'translate-x-5' : 'translate-x-0'
                       }`}
-                    >
-                      <span
-                        aria-hidden="true"
-                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                          formData.pcd === true ? 'translate-x-5' : 'translate-x-0'
-                        }`}
-                      />
-                    </button>
-                    <span className="text-sm font-medium text-gray-700 ml-2">Sim</span>
-                  </div>
+                    />
+                  </button>
+                  <span className="text-sm font-medium text-gray-700">Sim</span>
                 </div>
                 {errors.pcd && <p className="mt-1 text-sm text-red-500">{errors.pcd}</p>}
               </div>
@@ -898,13 +896,13 @@ export default function SolicitacaoVagas() {
                         Cargo
                       </th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Escolaridade Mínima
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Bairro
+                        Escolaridade
                       </th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         PCD
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Bairro
                       </th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Link
@@ -936,10 +934,10 @@ export default function SolicitacaoVagas() {
                           {item.escolaridade || '-'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {item.bairro || '-'}
+                          {item.pcd === undefined ? '-' : (item.pcd ? 'Sim' : 'Não')}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {item.pcd === undefined ? '-' : (item.pcd ? 'Sim' : 'Não')}
+                          {item.bairro || '-'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {item.link ? (
