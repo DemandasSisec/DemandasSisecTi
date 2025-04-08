@@ -7,7 +7,7 @@ import DetalhamentoDemanda from './pages/vagas/DetalhamentoDemanda'
 import ListaSolicitacoes from './pages/demandas/ListaSolicitacoes'
 import NovaSolicitacao from './pages/demandas/NovaSolicitacao'
 import CadastrarUsuario from './pages/comum/CadastrarUsuario'
-import SolicitacaoVagas from './pages/vagas/SolicitacaoVagas'
+import SolicitacaoVagas from './pages/vagas/NovaSolicitacao/Emprego/NSEmprego'
 import PainelDemandas from './pages/demandas/PainelDemandas'
 import CadastroEmpresa from './pages/vagas/CadastroEmpresa'
 import { LoadingProvider } from './context/LoadingContext'
@@ -39,10 +39,11 @@ function App() {
                       <AppLayout>
                         <Routes>
                           <Route path="dashboard" element={<Dashboard />} />
-                          <Route path="nova-solicitacao" element={<NovaSolicitacao />} />
-                          <Route path="lista-solicitacoes" element={<ListaSolicitacoes />} />
-                          <Route path="painel-demandas" element={<PainelDemandas />} />
-                          <Route path="detalhes-solicitacao/:id" element={<DetalhesSolicitacao />} />
+                          <Route path="demandas/nova-solicitacao" element={<NovaSolicitacao />} />
+                          <Route path="demandas/lista-solicitacoes" element={<ListaSolicitacoes />} />
+                          <Route path="demandas/painel-demandas" element={<PainelDemandas />} />
+                          <Route path="demandas/detalhes-solicitacao/:id" element={<DetalhesSolicitacao />} />
+                          <Route path="demandas/responsaveis-detalhado" element={<ResponsaveisDetalhado />} />
                           <Route 
                             path="cadastrar-usuario" 
                             element={
@@ -59,10 +60,9 @@ function App() {
                               </ProtectedRoute>
                             } 
                           />
-                          <Route path="responsaveis-detalhado" element={<ResponsaveisDetalhado />} />
-                          <Route path="solicitacao-vagas" element={<SolicitacaoVagas />} />
+                          <Route path="vagas/nova-solicitacao" element={<SolicitacaoVagas />} />
                           <Route 
-                            path="/vagas-solicitacoes" 
+                            path="vagas/lista-solicitacoes" 
                             element={
                               <ProtectedRoute allowedUserTypes={['admin']}>
                                 <ListaSolicitacoesVagas />
@@ -70,17 +70,18 @@ function App() {
                             } 
                           />
                           <Route 
-                            path="/detalhes-solicitacao-vaga/:id" 
+                            path="vagas/detalhes-solicitacao/:id" 
                             element={<DetalhamentoDemanda />} 
                           />
                           <Route 
-                            path="/cadastrar-empresa" 
+                            path="vagas/cadastro-empresa" 
                             element={
                               <ProtectedRoute allowedUserTypes={['admin']}>
                                 <CadastroEmpresa />
                               </ProtectedRoute>
                             } 
                           />
+                          <Route path="*" element={<Navigate to="/dashboard" replace />} />
                         </Routes>
                       </AppLayout>
                     </ProtectedRoute>

@@ -14,16 +14,16 @@ function Sidebar() {
 
   const equipeTIItems = [
     { path: '/dashboard', icon: ChartBarIcon, label: 'Dashboard' },
-    { path: '/lista-solicitacoes', icon: ClipboardDocumentListIcon, label: 'Solicitações' },
-    { path: '/nova-solicitacao', icon: PlusCircleIcon, label: 'Nova Solicitação' },
+    { path: '/demandas/lista-solicitacoes', icon: ClipboardDocumentListIcon, label: 'Solicitações' },
+    { path: '/demandas/nova-solicitacao', icon: PlusCircleIcon, label: 'Nova Solicitação' },
     { path: '/cadastrar-usuario', icon: UserPlusIcon, label: 'Cadastrar Usuário' },
     { path: '/lista-usuarios', icon: UserPlusIcon, label: 'Lista de Usuários' },
   ]
   
   const vagasMenuItems = [
-    { path: '/solicitacao-vagas', icon: BriefcaseIcon, label: 'Nova Solicitação' },
-    { path: '/vagas-solicitacoes', icon: DocumentTextIcon, label: 'Lista de Solicitações' },
-    { path: '/cadastrar-empresa', icon: BriefcaseIcon, label: 'Cadastrar Empresa' },
+    { path: '/vagas/nova-solicitacao', icon: BriefcaseIcon, label: 'Nova Solicitação' },
+    { path: '/vagas/lista-solicitacoes', icon: DocumentTextIcon, label: 'Lista de Solicitações' },
+    { path: '/vagas/cadastro-empresa', icon: BriefcaseIcon, label: 'Cadastrar Empresa' },
   ]
 
   const isActive = (path: string) => location.pathname === path

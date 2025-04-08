@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import { toast } from 'react-hot-toast'
-import { databases, storage } from '../../config/appwrite'
-import { APPWRITE_CONFIG } from '../../config/appwrite'
+import { databases, storage } from '../../../../config/appwrite'
+import { APPWRITE_CONFIG } from '../../../../config/appwrite'
 import { ID } from 'appwrite'
-import { useAuth } from '../../contexts/AuthContext'
+import { useAuth } from '../../../../contexts/AuthContext'
 import { ArrowDownTrayIcon, ArrowUpTrayIcon, InformationCircleIcon, CheckCircleIcon, PlusIcon, TrashIcon, CloudArrowUpIcon, ArrowPathIcon } from '@heroicons/react/24/outline'
 
 // Interface para os dados da API do IBGE
