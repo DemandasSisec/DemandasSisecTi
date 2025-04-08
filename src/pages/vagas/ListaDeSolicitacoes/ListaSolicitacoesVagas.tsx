@@ -8,11 +8,11 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
 } from '@heroicons/react/24/outline'
-import { useAuth } from '../../contexts/AuthContext'
+import { useAuth } from '../../../contexts/AuthContext'
 import Swal from 'sweetalert2'
 import { toast } from 'react-hot-toast'
-import { databases } from '../../config/appwrite'
-import { APPWRITE_CONFIG } from '../../config/appwrite'
+import { databases } from '../../../config/appwrite'
+import { APPWRITE_CONFIG } from '../../../config/appwrite'
 
 // Definindo o tipo para as solicitações de vagas
 interface JobRequest {
@@ -257,7 +257,7 @@ function ListaSolicitacoesVagas() {
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <Link
-                      to={`/detalhes-solicitacao-vaga/${request.demand_id}`}
+                      to={`/vagas/detalhes-solicitacao/${request.demand_id}`}
                       className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
                     >
                       {request.demand_id}

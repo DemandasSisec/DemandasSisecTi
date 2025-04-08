@@ -1,13 +1,16 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import SolicitacaoEmpreendedorismo from './pages/vagas/NovaSolicitacao/Empreendedorismo/NSEmpreendedorismo'
+import ListaSolicitacoesVagas from './pages/vagas/ListaDeSolicitacoes/ListaSolicitacoesVagas'
+import SolicitacaoCapacitacao from './pages/vagas/NovaSolicitacao/Capacitacao/NSCapacitacao'
+import DetalhamentoDemanda from './pages/vagas/DetalhamentoDemanda/DetalhamentoDemanda'
+import SolicitacaoVagas from './pages/vagas/NovaSolicitacao/Emprego/NSEmprego'
 import ResponsaveisDetalhado from './pages/demandas/ResponsaveisDetalhado'
-import ListaSolicitacoesVagas from './pages/vagas/ListaSolicitacoesVagas'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import DetalhesSolicitacao from './pages/demandas/DetalhesDaSolicitacao'
 import { SmallLoadingProvider } from './context/SmallLoadingContext'
-import DetalhamentoDemanda from './pages/vagas/DetalhamentoDemanda'
 import ListaSolicitacoes from './pages/demandas/ListaSolicitacoes'
+import SelecaoTipoUsuario from './pages/comum/SelecaoTipoUsuario'
 import NovaSolicitacao from './pages/demandas/NovaSolicitacao'
 import CadastrarUsuario from './pages/comum/CadastrarUsuario'
-import SolicitacaoVagas from './pages/vagas/NovaSolicitacao/Emprego/NSEmprego'
 import PainelDemandas from './pages/demandas/PainelDemandas'
 import CadastroEmpresa from './pages/vagas/CadastroEmpresa'
 import { LoadingProvider } from './context/LoadingContext'
@@ -18,7 +21,6 @@ import Dashboard from './pages/comum/Dashboard'
 import AppLayout from './components/AppLayout'
 import { Toaster } from 'react-hot-toast'
 import Login from './pages/comum/Login'
-import SelecaoTipoUsuario from './pages/comum/SelecaoTipoUsuario'
 
 function App() {
   return (
@@ -39,49 +41,21 @@ function App() {
                       <AppLayout>
                         <Routes>
                           <Route path="dashboard" element={<Dashboard />} />
+                          <Route path="lista-usuarios" element={<ListaUsuarios />} />
+                          <Route path="cadastrar-usuario" element={<CadastrarUsuario />} />
+                          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                          <Route path="vagas/cadastro-empresa" element={<CadastroEmpresa />} />
+                          <Route path="demandas/painel-demandas" element={<PainelDemandas />} />
                           <Route path="demandas/nova-solicitacao" element={<NovaSolicitacao />} />
                           <Route path="demandas/lista-solicitacoes" element={<ListaSolicitacoes />} />
-                          <Route path="demandas/painel-demandas" element={<PainelDemandas />} />
+                          <Route path="vagas/nova-solicitacao/emprego" element={<SolicitacaoVagas />} />
+                          <Route path="vagas/nova-solicitacao/capacitacao" element={<SolicitacaoCapacitacao />} />
+                          <Route path="vagas/nova-solicitacao/empreendedorismo" element={<SolicitacaoEmpreendedorismo />} />
+                          <Route path="vagas/lista-solicitacoes" element={<ListaSolicitacoesVagas />} />
+                          <Route path="vagas/detalhes-solicitacao/:id" element={<DetalhamentoDemanda />} />
                           <Route path="demandas/detalhes-solicitacao/:id" element={<DetalhesSolicitacao />} />
                           <Route path="demandas/responsaveis-detalhado" element={<ResponsaveisDetalhado />} />
-                          <Route 
-                            path="cadastrar-usuario" 
-                            element={
-                              <ProtectedRoute allowedUserTypes={['admin']}>
-                                <CadastrarUsuario />
-                              </ProtectedRoute>
-                            } 
-                          />
-                          <Route 
-                            path="lista-usuarios" 
-                            element={
-                              <ProtectedRoute allowedUserTypes={['admin']}>
-                                <ListaUsuarios />
-                              </ProtectedRoute>
-                            } 
-                          />
-                          <Route path="vagas/nova-solicitacao" element={<SolicitacaoVagas />} />
-                          <Route 
-                            path="vagas/lista-solicitacoes" 
-                            element={
-                              <ProtectedRoute allowedUserTypes={['admin']}>
-                                <ListaSolicitacoesVagas />
-                              </ProtectedRoute>
-                            } 
-                          />
-                          <Route 
-                            path="vagas/detalhes-solicitacao/:id" 
-                            element={<DetalhamentoDemanda />} 
-                          />
-                          <Route 
-                            path="vagas/cadastro-empresa" 
-                            element={
-                              <ProtectedRoute allowedUserTypes={['admin']}>
-                                <CadastroEmpresa />
-                              </ProtectedRoute>
-                            } 
-                          />
-                          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                          <Route path="vagas/nova-solicitacao" element={<Navigate to="/vagas/nova-solicitacao/emprego" replace />} />
                         </Routes>
                       </AppLayout>
                     </ProtectedRoute>

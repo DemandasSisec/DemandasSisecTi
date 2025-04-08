@@ -1,8 +1,15 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { HomeIcon, PlusCircleIcon, ClipboardDocumentListIcon, ArrowLeftOnRectangleIcon, UserPlusIcon, ViewColumnsIcon, ChartBarIcon, BriefcaseIcon, DocumentTextIcon, ChevronDownIcon, UserGroupIcon } from '@heroicons/react/24/outline'
+import { HomeIcon, PlusCircleIcon, ClipboardDocumentListIcon, ArrowLeftOnRectangleIcon, UserPlusIcon, ViewColumnsIcon, ChartBarIcon, BriefcaseIcon, DocumentTextIcon, ChevronDownIcon, UserGroupIcon, AcademicCapIcon, BuildingStorefrontIcon } from '@heroicons/react/24/outline'
 import { useAuth } from '../context/AuthContext'
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+
+interface MenuItem {
+  path?: string
+  icon?: typeof BriefcaseIcon
+  label: string
+  type?: 'title'
+}
 
 function Sidebar() {
   const location = useLocation()
@@ -12,7 +19,7 @@ function Sidebar() {
   const [isVagasOpen, setIsVagasOpen] = useState(true)
   const [isEquipeTIOpen, setIsEquipeTIOpen] = useState(true)
 
-  const equipeTIItems = [
+  const equipeTIItems: MenuItem[] = [
     { path: '/dashboard', icon: ChartBarIcon, label: 'Dashboard' },
     { path: '/demandas/lista-solicitacoes', icon: ClipboardDocumentListIcon, label: 'Solicitações' },
     { path: '/demandas/nova-solicitacao', icon: PlusCircleIcon, label: 'Nova Solicitação' },
@@ -20,9 +27,14 @@ function Sidebar() {
     { path: '/lista-usuarios', icon: UserPlusIcon, label: 'Lista de Usuários' },
   ]
   
-  const vagasMenuItems = [
-    { path: '/vagas/nova-solicitacao', icon: BriefcaseIcon, label: 'Nova Solicitação' },
+  const vagasMenuItems: MenuItem[] = [
+    { type: 'title', label: 'Nova Solicitação' },
+    { path: '/vagas/nova-solicitacao/capacitacao', icon: AcademicCapIcon, label: 'Capacitação' },
+    { path: '/vagas/nova-solicitacao/empreendedorismo', icon: BuildingStorefrontIcon, label: 'Empreendedorismo' },
+    { path: '/vagas/nova-solicitacao/emprego', icon: BriefcaseIcon, label: 'Emprego' },
+    { type: 'title', label: 'Lista' },
     { path: '/vagas/lista-solicitacoes', icon: DocumentTextIcon, label: 'Lista de Solicitações' },
+    { type: 'title', label: 'Cadastro' },
     { path: '/vagas/cadastro-empresa', icon: BriefcaseIcon, label: 'Cadastrar Empresa' },
   ]
 
@@ -120,19 +132,21 @@ function Sidebar() {
                   animate={{ x: 0, opacity: 1 }}
                   transition={{ delay: 0.1 + index * 0.05 }}
                 >
-                  <Link
-                    to={item.path}
-                    className={`flex items-center px-4 py-3 mb-2 rounded-lg text-gray-300 hover:bg-white/10 transition-all duration-200 group ${
-                      isActive(item.path) 
-                        ? 'bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-white shadow-sm' 
-                        : ''
-                    }`}
-                  >
-                    <item.icon className={`w-5 h-5 mr-3 transition-transform duration-200 group-hover:scale-110 ${
-                      isActive(item.path) ? 'text-white' : 'text-gray-300'
-                    }`} />
-                    <span className={`text-sm font-medium ${isActive(item.path) ? 'text-white' : ''}`}>{item.label}</span>
-                  </Link>
+                  {item.path && item.icon && (
+                    <Link
+                      to={item.path}
+                      className={`flex items-center px-4 py-3 mb-2 rounded-lg text-gray-300 hover:bg-white/10 transition-all duration-200 group ${
+                        isActive(item.path) 
+                          ? 'bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-white shadow-sm' 
+                          : ''
+                      }`}
+                    >
+                      <item.icon className={`w-5 h-5 mr-3 transition-transform duration-200 group-hover:scale-110 ${
+                        isActive(item.path) ? 'text-white' : 'text-gray-300'
+                      }`} />
+                      <span className={`text-sm font-medium ${isActive(item.path) ? 'text-white' : ''}`}>{item.label}</span>
+                    </Link>
+                  )}
                 </motion.div>
               ))}
             </motion.div>
@@ -169,24 +183,30 @@ function Sidebar() {
             >
               {vagasMenuItems.map((item, index) => (
                 <motion.div
-                  key={item.path}
+                  key={item.path || index}
                   initial={{ x: -20, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
                   transition={{ delay: 0.1 + index * 0.05 }}
                 >
-                  <Link
-                    to={item.path}
-                    className={`flex items-center px-4 py-3 mb-2 rounded-lg text-gray-300 hover:bg-white/10 transition-all duration-200 group ${
-                      isActive(item.path) 
-                        ? 'bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-white shadow-sm' 
-                        : ''
-                    }`}
-                  >
-                    <item.icon className={`w-5 h-5 mr-3 transition-transform duration-200 group-hover:scale-110 ${
-                      isActive(item.path) ? 'text-white' : 'text-gray-300'
-                    }`} />
-                    <span className={`text-sm font-medium ${isActive(item.path) ? 'text-white' : ''}`}>{item.label}</span>
-                  </Link>
+                  {item.type === 'title' ? (
+                    <div className="px-4 py-2 mb-1">
+                      <span className="text-sm font-medium text-gray-400">{item.label}</span>
+                    </div>
+                  ) : item.path && item.icon && (
+                    <Link
+                      to={item.path}
+                      className={`flex items-center px-4 py-3 mb-2 rounded-lg text-gray-300 hover:bg-white/10 transition-all duration-200 group ${
+                        isActive(item.path) 
+                          ? 'bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-white shadow-sm' 
+                          : ''
+                      }`}
+                    >
+                      <item.icon className={`w-5 h-5 mr-3 transition-transform duration-200 group-hover:scale-110 ${
+                        isActive(item.path) ? 'text-white' : 'text-gray-300'
+                      }`} />
+                      <span className={`text-sm font-medium ${isActive(item.path) ? 'text-white' : ''}`}>{item.label}</span>
+                    </Link>
+                  )}
                 </motion.div>
               ))}
             </motion.div>

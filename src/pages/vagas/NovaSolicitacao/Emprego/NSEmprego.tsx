@@ -533,7 +533,7 @@ export default function SolicitacaoVagas() {
         {/* Cabeçalho */}
         <div className="mb-12 text-center">
           <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-            Solicitação de Vagas
+            Nova Solicitação - Emprego
           </h1>
           <p className="mt-2 text-gray-600">
             Adicione suas solicitações de vagas de forma rápida e organizada
