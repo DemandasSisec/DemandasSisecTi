@@ -4,7 +4,7 @@ import { databases, storage } from '../../config/appwrite'
 import { APPWRITE_CONFIG } from '../../config/appwrite'
 import { ID } from 'appwrite'
 import { useAuth } from '../../contexts/AuthContext'
-import { ArrowDownTrayIcon, ArrowUpTrayIcon, InformationCircleIcon, CheckCircleIcon, PlusIcon, TrashIcon, CloudArrowUpIcon } from '@heroicons/react/24/outline'
+import { ArrowDownTrayIcon, ArrowUpTrayIcon, InformationCircleIcon, CheckCircleIcon, PlusIcon, TrashIcon, CloudArrowUpIcon, ArrowPathIcon } from '@heroicons/react/24/outline'
 
 // Interface para os dados da API do IBGE
 interface EstadoIBGE {
@@ -52,6 +52,8 @@ interface VagaItem {
   bairro?: string
   pcd: boolean | undefined
   link?: string
+  escolaridade?: string
+  escolaridade_texto?: string
   criadoPor?: string
   dataCriacao?: string
 }
@@ -62,6 +64,7 @@ export default function SolicitacaoVagas() {
   const [saving, setSaving] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [vagaItems, setVagaItems] = useState<VagaItem[]>([])
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false)
   
   // Estados para dados da API do IBGE
   const [estados, setEstados] = useState<EstadoIBGE[]>([])
@@ -78,7 +81,8 @@ export default function SolicitacaoVagas() {
     cargo: '',
     bairro: '',
     pcd: undefined as boolean | undefined,
-    link: ''
+    link: '',
+    escolaridade: ''
   })
   
   // Estado para controle de erros
@@ -354,6 +358,7 @@ export default function SolicitacaoVagas() {
       newErrors.numeroVagas = 'Número de vagas deve ser um número positivo'
     }
     if (!formData.cargo) newErrors.cargo = 'Cargo é obrigatório'
+    if (!formData.escolaridade) newErrors.escolaridade = 'Escolaridade é obrigatória'
     
     // Validar PCD - garantir que o usuário fez uma escolha explícita
     if (formData.pcd === undefined) {
@@ -393,6 +398,20 @@ export default function SolicitacaoVagas() {
     const newId = ID.unique()
     console.log('Adicionando item com ID:', newId)
     
+    // Mapear o valor da escolaridade para a sigla correspondente
+    const escolaridadeMap: Record<string, string> = {
+      'Analfabeto': 'ANF',
+      'Fundamental Incompleto': 'EFI',
+      'Fundamental Completo': 'EFC',
+      'Médio Incompleto': 'EMI',
+      'Médio Completo': 'EMC',
+      'Superior Incompleto': 'ESI',
+      'Superior Completo': 'ESC',
+      'Pós-graduação': 'ES+',
+      'Mestrado': 'ES+',
+      'Doutorado': 'ES+'
+    }
+    
     const newItem: VagaItem = {
       id: newId,
       uf: formData.uf,
@@ -403,6 +422,8 @@ export default function SolicitacaoVagas() {
       bairro: formData.bairro || undefined,
       pcd: formData.pcd,
       link: formData.link || undefined,
+      escolaridade: escolaridadeMap[formData.escolaridade] || '',
+      escolaridade_texto: formData.escolaridade,
       criadoPor: user?.email || undefined,
       dataCriacao: new Date().toISOString()
     }
@@ -427,7 +448,8 @@ export default function SolicitacaoVagas() {
       cargo: '',
       bairro: '',
       pcd: undefined,
-      link: ''
+      link: '',
+      escolaridade: ''
     })
     
     toast.success('Item adicionado com sucesso!')
@@ -473,7 +495,8 @@ export default function SolicitacaoVagas() {
       Cargo: item.cargo,
       Bairro: item.bairro || '',
       PCD: item.pcd ? 'Sim' : 'Não',
-      Link: item.link || ''
+      Link: item.link || '',
+      'Escolaridade Mínima': item.escolaridade || ''
     }))
     
     // Aqui você implementaria a lógica para exportar para Excel
@@ -513,7 +536,8 @@ export default function SolicitacaoVagas() {
       localStorage.removeItem('vagaItems')
       console.log('LocalStorage limpo após salvamento')
       
-      toast.success('Vagas salvas com sucesso!')
+      // Mostrar mensagem de sucesso
+      setShowSuccessMessage(true)
       
       // Limpar a lista de itens após salvar
       setVagaItems([])
@@ -525,6 +549,22 @@ export default function SolicitacaoVagas() {
     } finally {
       setSaving(false)
     }
+  }
+
+  // Função para iniciar uma nova solicitação
+  const handleNewRequest = () => {
+    setShowSuccessMessage(false)
+    setFormData({
+      uf: '',
+      cidade: '',
+      codigoIBGE: '',
+      numeroVagas: '',
+      cargo: '',
+      bairro: '',
+      pcd: undefined,
+      link: '',
+      escolaridade: ''
+    })
   }
 
   return (
@@ -539,6 +579,24 @@ export default function SolicitacaoVagas() {
             Adicione suas solicitações de vagas de forma rápida e organizada
           </p>
         </div>
+
+        {/* Mensagem de sucesso */}
+        {showSuccessMessage && (
+          <div className="mb-8 bg-green-50 border border-green-200 rounded-xl p-6 text-center">
+            <div className="flex flex-col items-center">
+              <CheckCircleIcon className="h-12 w-12 text-green-500 mb-4" />
+              <h2 className="text-xl font-semibold text-green-800 mb-2">Dados enviados com sucesso!</h2>
+              <p className="text-green-700 mb-4">Sua solicitação foi registrada no sistema e será processada em breve.</p>
+              <button
+                onClick={handleNewRequest}
+                className="flex items-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors shadow-md hover:shadow-lg"
+              >
+                <ArrowPathIcon className="w-5 h-5 mr-2" />
+                Enviar uma nova solicitação
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="space-y-8">
           {/* 01. Formulário de Adição */}
@@ -639,8 +697,8 @@ export default function SolicitacaoVagas() {
                 </div>
               </div>
 
-              {/* Campos de Cargo, Bairro e Link em uma linha separada */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+              {/* Campos de Cargo, Escolaridade Mínima, Bairro e Link em uma linha separada */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
                 {/* Cargo */}
                 <div>
                   <label htmlFor="cargo" className="block text-sm font-medium text-gray-700 mb-1">
@@ -673,6 +731,35 @@ export default function SolicitacaoVagas() {
                     )}
                   </div>
                   {errors.cargo && <p className="mt-1 text-sm text-red-500">{errors.cargo}</p>}
+                </div>
+
+                {/* Escolaridade */}
+                <div>
+                  <label htmlFor="escolaridade" className="block text-sm font-medium text-gray-700 mb-1">
+                    Escolaridade Mínima <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="escolaridade"
+                    name="escolaridade"
+                    value={formData.escolaridade}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      errors.escolaridade ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  >
+                    <option value="">Selecione a escolaridade mínima</option>
+                    <option value="Analfabeto">Analfabeto</option>
+                    <option value="Fundamental Incompleto">Fundamental Incompleto</option>
+                    <option value="Fundamental Completo">Fundamental Completo</option>
+                    <option value="Médio Incompleto">Médio Incompleto</option>
+                    <option value="Médio Completo">Médio Completo</option>
+                    <option value="Superior Incompleto">Superior Incompleto</option>
+                    <option value="Superior Completo">Superior Completo</option>
+                    <option value="Pós-graduação">Pós-graduação</option>
+                    <option value="Mestrado">Mestrado</option>
+                    <option value="Doutorado">Doutorado</option>
+                  </select>
+                  {errors.escolaridade && <p className="mt-1 text-sm text-red-500">{errors.escolaridade}</p>}
                 </div>
 
                 {/* Bairro */}
@@ -715,32 +802,26 @@ export default function SolicitacaoVagas() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Pessoa com Deficiência (PCD) <span className="text-red-500">*</span>
                 </label>
-                <div className="flex space-x-4">
+                <div className="flex items-center space-x-4">
                   <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      id="pcd-sim"
-                      name="pcd-sim"
-                      checked={formData.pcd === true}
-                      onChange={() => setFormData({...formData, pcd: true})}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                    />
-                    <label htmlFor="pcd-sim" className="ml-2 block text-sm font-medium text-gray-700">
-                      Sim
-                    </label>
-                  </div>
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      id="pcd-nao"
-                      name="pcd-nao"
-                      checked={formData.pcd === false}
-                      onChange={() => setFormData({...formData, pcd: false})}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                    />
-                    <label htmlFor="pcd-nao" className="ml-2 block text-sm font-medium text-gray-700">
-                      Não
-                    </label>
+                    <span className="text-sm font-medium text-gray-700 mr-2">Não</span>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={formData.pcd === true}
+                      onClick={() => setFormData({...formData, pcd: true})}
+                      className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                        formData.pcd === true ? 'bg-blue-600' : 'bg-gray-200'
+                      }`}
+                    >
+                      <span
+                        aria-hidden="true"
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                          formData.pcd === true ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                    <span className="text-sm font-medium text-gray-700 ml-2">Sim</span>
                   </div>
                 </div>
                 {errors.pcd && <p className="mt-1 text-sm text-red-500">{errors.pcd}</p>}
@@ -767,23 +848,26 @@ export default function SolicitacaoVagas() {
               </h2>
               <div className="flex space-x-2">
                 {vagaItems.length > 0 && (
-                  <>
-                    <button
-                      onClick={handleExportToExcel}
-                      className="flex items-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors shadow-md hover:shadow-lg"
-                    >
-                      <ArrowDownTrayIcon className="w-5 h-5 mr-2" />
-                      Exportar para Excel
-                    </button>
-                    <button
-                      onClick={handleSaveToDatabase}
-                      disabled={saving}
-                      className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <CloudArrowUpIcon className="w-5 h-5 mr-2" />
-                      {saving ? 'Enviando...' : 'Enviar dados'}
-                    </button>
-                  </>
+                  <button
+                    onClick={handleSaveToDatabase}
+                    disabled={saving}
+                    className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {saving ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Enviando...
+                      </>
+                    ) : (
+                      <>
+                        <CloudArrowUpIcon className="w-5 h-5 mr-2" />
+                        Enviar dados
+                      </>
+                    )}
+                  </button>
                 )}
               </div>
             </div>
@@ -812,6 +896,9 @@ export default function SolicitacaoVagas() {
                       </th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Cargo
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Escolaridade Mínima
                       </th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Bairro
@@ -844,6 +931,9 @@ export default function SolicitacaoVagas() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {item.cargo}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {item.escolaridade || '-'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {item.bairro || '-'}
