@@ -4,7 +4,8 @@ import { databases, storage } from '../../../../config/appwrite'
 import { APPWRITE_CONFIG } from '../../../../config/appwrite'
 import { ID } from 'appwrite'
 import { useAuth } from '../../../../contexts/AuthContext'
-import { ArrowDownTrayIcon, ArrowUpTrayIcon, InformationCircleIcon, CheckCircleIcon, PlusIcon, TrashIcon, CloudArrowUpIcon, ArrowPathIcon } from '@heroicons/react/24/outline'
+import { CheckCircleIcon, PlusIcon, TrashIcon, CloudArrowUpIcon, ArrowPathIcon } from '@heroicons/react/24/outline'
+import './NSEmprego.module.css'
 
 // Interface para os dados da API do IBGE
 interface EstadoIBGE {
