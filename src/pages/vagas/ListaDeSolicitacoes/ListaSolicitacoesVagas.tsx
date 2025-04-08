@@ -18,6 +18,7 @@ import { APPWRITE_CONFIG } from '../../../config/appwrite'
 interface JobRequest {
   $id: string
   demand_id: string
+  empresa: string
   assigned_to?: string
   requester_name: string
   created_at: string
@@ -27,30 +28,54 @@ interface JobRequest {
 // Reusing StatusBadge component from ListaSolicitacoes
 export function StatusBadge({ status }: { status: string }) {
   const styles = {
-    pending: 'bg-yellow-100 text-yellow-800 border border-yellow-200',
-    in_progress: 'bg-blue-100 text-blue-800 border border-blue-200',
-    completed: 'bg-green-100 text-green-800 border border-green-200',
-    cancelled: 'bg-red-100 text-red-800 border border-red-200'
+    pendente: 'bg-yellow-100 text-yellow-800 border border-yellow-200',
+    extraindo_candidatos: 'bg-blue-100 text-blue-800 border border-blue-200',
+    processando_lista: 'bg-indigo-100 text-indigo-800 border border-indigo-200',
+    aguardando_cadastro_vagas: 'bg-purple-100 text-purple-800 border border-purple-200',
+    aguardando_cadastro: 'bg-pink-100 text-pink-800 border border-pink-200',
+    lista_cadastrada: 'bg-red-100 text-red-800 border border-red-200',
+    enviado_ouvidoria: 'bg-orange-100 text-orange-800 border border-orange-200',
+    aguardando_retorno: 'bg-amber-100 text-amber-800 border border-amber-200',
+    retorno_recebido: 'bg-lime-100 text-lime-800 border border-lime-200',
+    extraindo_interessados: 'bg-green-100 text-green-800 border border-green-200',
+    encaminhados_empresa: 'bg-emerald-100 text-emerald-800 border border-emerald-200',
+    concluido: 'bg-teal-100 text-teal-800 border border-teal-200'
   }
 
   const icons = {
-    pending: ClockIcon,
-    in_progress: ClockIcon,
-    completed: CheckCircleIcon,
-    cancelled: ClockIcon
+    pendente: ClockIcon,
+    extraindo_candidatos: ClockIcon,
+    processando_lista: ClockIcon,
+    aguardando_cadastro_vagas: ClockIcon,
+    aguardando_cadastro: ClockIcon,
+    lista_cadastrada: ClockIcon,
+    enviado_ouvidoria: ClockIcon,
+    aguardando_retorno: ClockIcon,
+    retorno_recebido: ClockIcon,
+    extraindo_interessados: ClockIcon,
+    encaminhados_empresa: ClockIcon,
+    concluido: CheckCircleIcon
   }
 
   const labels = {
-    pending: 'Pendente',
-    in_progress: 'Em Andamento',
-    completed: 'Concluída',
-    cancelled: 'Cancelada'
+    pendente: 'Pendente',
+    extraindo_candidatos: 'Extraindo Candidatos',
+    processando_lista: 'Processando Lista',
+    aguardando_cadastro_vagas: 'Aguardando Cadastro de Vagas',
+    aguardando_cadastro: 'Aguardando Cadastro',
+    lista_cadastrada: 'Lista Cadastrada',
+    enviado_ouvidoria: 'Enviado para Ouvidoria',
+    aguardando_retorno: 'Aguardando Retorno',
+    retorno_recebido: 'Retorno Recebido',
+    extraindo_interessados: 'Extraindo Interessados',
+    encaminhados_empresa: 'Encaminhados para Empresa',
+    concluido: 'Concluído'
   }
 
-  const Icon = icons[status as keyof typeof icons] || icons.pending
+  const Icon = icons[status as keyof typeof icons] || icons.pendente
 
   return (
-    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${styles[status as keyof typeof styles] || styles.pending} shadow-sm`}>
+    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${styles[status as keyof typeof styles] || styles.pendente} shadow-sm`}>
       <Icon className="w-3.5 h-3.5 mr-1" />
       {labels[status as keyof typeof labels] || status}
     </span>
@@ -108,34 +133,137 @@ function ListaSolicitacoesVagas() {
           {
             $id: 'VAG001',
             demand_id: '5356148',
+            empresa: 'TechCorp Solutions',
             assigned_to: 'Carlos Rodrigues',
             requester_name: 'João Silva',
             created_at: new Date().toISOString(),
-            status: 'pending'
+            status: 'pendente'
           },
           {
             $id: 'VAG002',
             demand_id: '7845962',
+            empresa: 'Inovação Digital',
             assigned_to: 'Ana Paula',
             requester_name: 'Maria Santos',
             created_at: new Date(Date.now() - 86400000).toISOString(),
-            status: 'in_progress'
+            status: 'extraindo_candidatos'
           },
           {
             $id: 'VAG003',
             demand_id: '2369841',
+            empresa: 'Futuro Tecnologia',
             assigned_to: 'Roberto Lima',
             requester_name: 'Pedro Oliveira',
             created_at: new Date(Date.now() - 172800000).toISOString(),
-            status: 'completed'
+            status: 'concluido'
           },
           {
             $id: 'VAG004',
             demand_id: '9874563',
+            empresa: 'Soluções Avançadas',
             assigned_to: undefined,
             requester_name: 'Ana Souza',
             created_at: new Date(Date.now() - 259200000).toISOString(),
-            status: 'cancelled'
+            status: 'aguardando_cadastro'
+          },
+          {
+            $id: 'VAG005',
+            demand_id: '1234567',
+            empresa: 'Empresa ABC',
+            assigned_to: 'Lucas Fontoura',
+            requester_name: 'Carlos Mendes',
+            created_at: new Date(Date.now() - 345600000).toISOString(),
+            status: 'processando_lista'
+          },
+          {
+            $id: 'VAG006',
+            demand_id: '7654321',
+            empresa: 'XYZ Tecnologia',
+            assigned_to: 'Mariana Costa',
+            requester_name: 'Roberto Alves',
+            created_at: new Date(Date.now() - 432000000).toISOString(),
+            status: 'aguardando_cadastro_vagas'
+          },
+          {
+            $id: 'VAG007',
+            demand_id: '9876543',
+            empresa: 'Inovação & Cia',
+            assigned_to: 'Pedro Santos',
+            requester_name: 'Ana Beatriz',
+            created_at: new Date(Date.now() - 518400000).toISOString(),
+            status: 'lista_cadastrada'
+          },
+          {
+            $id: 'VAG008',
+            demand_id: '3456789',
+            empresa: 'Futuro Digital',
+            assigned_to: 'Juliana Lima',
+            requester_name: 'Marcos Oliveira',
+            created_at: new Date(Date.now() - 604800000).toISOString(),
+            status: 'enviado_ouvidoria'
+          },
+          {
+            $id: 'VAG009',
+            demand_id: '8765432',
+            empresa: 'Soluções Integradas',
+            assigned_to: 'Fernando Silva',
+            requester_name: 'Patrícia Souza',
+            created_at: new Date(Date.now() - 691200000).toISOString(),
+            status: 'aguardando_retorno'
+          },
+          {
+            $id: 'VAG010',
+            demand_id: '2345678',
+            empresa: 'Tech Solutions',
+            assigned_to: 'Camila Oliveira',
+            requester_name: 'Ricardo Mendes',
+            created_at: new Date(Date.now() - 777600000).toISOString(),
+            status: 'retorno_recebido'
+          },
+          {
+            $id: 'VAG011',
+            demand_id: '6543210',
+            empresa: 'Digital Systems',
+            assigned_to: 'André Costa',
+            requester_name: 'Luciana Alves',
+            created_at: new Date(Date.now() - 864000000).toISOString(),
+            status: 'extraindo_interessados'
+          },
+          {
+            $id: 'VAG012',
+            demand_id: '8901234',
+            empresa: 'Inovação Avançada',
+            assigned_to: 'Thiago Santos',
+            requester_name: 'Mariana Beatriz',
+            created_at: new Date(Date.now() - 950400000).toISOString(),
+            status: 'encaminhados_empresa'
+          },
+          {
+            $id: 'VAG013',
+            demand_id: '4567890',
+            empresa: 'Futuro & Presente',
+            assigned_to: 'Bianca Lima',
+            requester_name: 'Felipe Oliveira',
+            created_at: new Date(Date.now() - 1036800000).toISOString(),
+            status: 'concluido'
+          },
+          {
+            $id: 'VAG014',
+            demand_id: '7890123',
+            empresa: 'Soluções do Amanhã',
+            assigned_to: 'Rafael Silva',
+            requester_name: 'Carla Souza',
+            created_at: new Date(Date.now() - 1123200000).toISOString(),
+            status: 'pendente'
+          },
+          {
+            $id: 'VAG015',
+            demand_id: '3210987',
+            empresa: 'Tech do Futuro',
+            assigned_to: 'Amanda Oliveira',
+            requester_name: 'Bruno Mendes',
+            created_at: new Date(Date.now() - 1209600000).toISOString(),
+            status: 'extraindo_candidatos'
           }
         ];
 
@@ -215,7 +343,7 @@ function ListaSolicitacoesVagas() {
             </div>
             <input
               type="text"
-              placeholder="Buscar por ID, solicitante ou número da demanda..."
+              placeholder="Buscar por ID, empresa ou número da demanda..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 pr-4 py-2.5 bg-white/5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-96 transition-all duration-200"
@@ -233,10 +361,7 @@ function ListaSolicitacoesVagas() {
                   Nº da Demanda
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Responsável
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Solicitante
+                  Empresa
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Data Solicitação
@@ -250,6 +375,85 @@ function ListaSolicitacoesVagas() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
+              {/* Filtro na primeira linha */}
+              <tr className="bg-gray-50">
+                <td className="px-6 py-3">
+                  <input
+                    type="text"
+                    placeholder="Filtrar por ID"
+                    className="w-full px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    onChange={(e) => {
+                      const value = e.target.value.toLowerCase();
+                      const filtered = value
+                        ? requests.filter(r => r.demand_id.toLowerCase().includes(value))
+                        : requests;
+                      setFilteredRequests(filtered);
+                    }}
+                  />
+                </td>
+                <td className="px-6 py-3">
+                  <input
+                    type="text"
+                    placeholder="Filtrar por empresa"
+                    className="w-full px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    onChange={(e) => {
+                      const value = e.target.value.toLowerCase();
+                      const filtered = value
+                        ? requests.filter(r => r.empresa.toLowerCase().includes(value))
+                        : requests;
+                      setFilteredRequests(filtered);
+                    }}
+                  />
+                </td>
+                <td className="px-6 py-3">
+                  <input
+                    type="text"
+                    placeholder="Filtrar por data"
+                    className="w-full px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    onChange={(e) => {
+                      const value = e.target.value.toLowerCase();
+                      const filtered = value
+                        ? requests.filter(r => new Date(r.created_at).toLocaleDateString('pt-BR').includes(value))
+                        : requests;
+                      setFilteredRequests(filtered);
+                    }}
+                  />
+                </td>
+                <td className="px-6 py-3">
+                  <select
+                    className="w-full px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      const filtered = value
+                        ? requests.filter(r => r.status === value)
+                        : requests;
+                      setFilteredRequests(filtered);
+                    }}
+                  >
+                    <option value="">Todos os status</option>
+                    <option value="pendente">Pendente</option>
+                    <option value="extraindo_candidatos">Extraindo Candidatos</option>
+                    <option value="processando_lista">Processando Lista</option>
+                    <option value="aguardando_cadastro_vagas">Aguardando Cadastro de Vagas</option>
+                    <option value="aguardando_cadastro">Aguardando Cadastro</option>
+                    <option value="lista_cadastrada">Lista Cadastrada</option>
+                    <option value="enviado_ouvidoria">Enviado para Ouvidoria</option>
+                    <option value="aguardando_retorno">Aguardando Retorno</option>
+                    <option value="retorno_recebido">Retorno Recebido</option>
+                    <option value="extraindo_interessados">Extraindo Interessados</option>
+                    <option value="encaminhados_empresa">Encaminhados para Empresa</option>
+                    <option value="concluido">Concluído</option>
+                  </select>
+                </td>
+                <td className="px-6 py-3 text-center">
+                  <button
+                    onClick={() => setFilteredRequests(requests)}
+                    className="px-3 py-1 text-sm text-blue-600 hover:text-blue-800 font-medium"
+                  >
+                    Limpar
+                  </button>
+                </td>
+              </tr>
               {currentItems.map((request) => (
                 <tr 
                   key={request.$id} 
@@ -264,10 +468,7 @@ function ListaSolicitacoesVagas() {
                     </Link>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{request.assigned_to || 'Não atribuído'}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{request.requester_name}</div>
+                    <div className="text-sm text-gray-900">{request.empresa}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-600">
@@ -278,14 +479,12 @@ function ListaSolicitacoesVagas() {
                     <StatusBadge status={request.status} />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center">
-                    {isAdmin && (
-                      <button
-                        onClick={() => handleDelete(request.$id)}
-                        className="text-gray-400 hover:text-red-500 transition-colors"
-                      >
-                        <TrashIcon className="h-5 w-5" />
-                      </button>
-                    )}
+                    <button
+                      onClick={() => handleDelete(request.$id)}
+                      className="text-red-500 hover:text-red-700 transition-colors"
+                    >
+                      <TrashIcon className="h-5 w-5" />
+                    </button>
                   </td>
                 </tr>
               ))}
