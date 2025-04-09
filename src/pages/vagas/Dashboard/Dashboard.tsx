@@ -8,16 +8,12 @@ import {
   ChatBubbleLeftRightIcon
 } from '@heroicons/react/24/outline';
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
+  PieChart,
+  Pie,
+  Cell,
   Tooltip,
-  ResponsiveContainer,
-  Legend
+  ResponsiveContainer
 } from 'recharts';
-import { GraficoDePizza } from '../../../components/GraficoDePizza';
 import styles from './Dashboard.module.css';
 
 // Dados mockados para exemplo
@@ -28,16 +24,6 @@ const estatisticasVagas = {
   totalConcluido: 300,
   totalOuvidoria: 70
 };
-
-// Dados mockados para os gráficos
-const evolucaoVagas = [
-  { mes: 'Jan', total: 30, preenchidas: 20, emAberto: 10 },
-  { mes: 'Fev', total: 45, preenchidas: 30, emAberto: 15 },
-  { mes: 'Mar', total: 55, preenchidas: 35, emAberto: 20 },
-  { mes: 'Abr', total: 40, preenchidas: 25, emAberto: 15 },
-  { mes: 'Mai', total: 50, preenchidas: 40, emAberto: 10 },
-  { mes: 'Jun', total: 65, preenchidas: 45, emAberto: 20 }
-];
 
 // Dados mockados para o top 5 empresas
 const top5Empresas = [
@@ -50,9 +36,7 @@ const top5Empresas = [
 
 // Cores para os gráficos
 const CORES = {
-  total: '#60A5FA',      // azul
-  preenchidas: '#34D399', // verde
-  emAberto: '#F87171'     // vermelho
+  tipos: ['#60A5FA', '#34D399', '#F472B6', '#A78BFA', '#FBBF24'] // cores vibrantes
 };
 
 export default function Dashboard() {
@@ -121,21 +105,31 @@ export default function Dashboard() {
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <ChartBarIcon className={`${styles.icon} ${styles.iconBlue}`} />
-              <h2 className={styles.cardTitle}>Evolução das Vagas</h2>
+              <h2 className={styles.cardTitle}>Top Empresas</h2>
             </div>
-            <div className={styles.chartContainer}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={evolucaoVagas}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="mes" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="total" name="Total" fill={CORES.total} />
-                  <Bar dataKey="preenchidas" name="Preenchidas" fill={CORES.preenchidas} />
-                  <Bar dataKey="emAberto" name="Em Aberto" fill={CORES.emAberto} />
-                </BarChart>
-              </ResponsiveContainer>
+            <div className={styles.rankingList}>
+              {top5Empresas.map((empresa, index) => (
+                <div key={empresa.name} className={styles.rankingItem}>
+                  <div className={styles.rankingLeft}>
+                    <span className={styles.rankingNumber}>{index + 1}</span>
+                    <span className={styles.rankingName}>{empresa.name}</span>
+                  </div>
+                  <div className={styles.rankingRight}>
+                    <div className={styles.rankingBarContainer}>
+                      <div 
+                        className={styles.rankingBar} 
+                        style={{ 
+                          width: `${(empresa.value / top5Empresas[0].value) * 100}%`,
+                          backgroundColor: CORES.tipos[index % CORES.tipos.length]
+                        }}
+                      />
+                    </div>
+                    <span className={styles.rankingValue}>
+                      {empresa.value}
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -145,7 +139,63 @@ export default function Dashboard() {
               <h2 className={styles.cardTitle}>Distribuição por Tipo</h2>
             </div>
             <div className={styles.chartContainer}>
-              <GraficoDePizza data={top5Empresas} />
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={top5Empresas}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={100}
+                    paddingAngle={2}
+                    label={({
+                      cx,
+                      cy,
+                      midAngle,
+                      innerRadius,
+                      outerRadius,
+                      value,
+                      index
+                    }) => {
+                      const RADIAN = Math.PI / 180;
+                      const radius = 25 + outerRadius;
+                      const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                      const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+                      return (
+                        <text
+                          x={x}
+                          y={y}
+                          fill="#4B5563"
+                          textAnchor={x > cx ? 'start' : 'end'}
+                          dominantBaseline="central"
+                          fontSize="12"
+                        >
+                          {top5Empresas[index].name} ({value})
+                        </text>
+                      );
+                    }}
+                  >
+                    {top5Empresas.map((entry, index) => (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={CORES.tipos[index % CORES.tipos.length]}
+                        stroke="#fff"
+                        strokeWidth={1}
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'white',
+                      border: '1px solid #111827',
+                      borderRadius: '0.5rem'
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
             </div>
           </div>
         </div>
