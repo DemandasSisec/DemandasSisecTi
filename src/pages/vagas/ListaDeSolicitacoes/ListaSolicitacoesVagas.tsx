@@ -305,20 +305,21 @@ function ListaSolicitacoesVagas() {
 
     if (result.isConfirmed) {
       try {
-        await databases.deleteDocument(
-          APPWRITE_CONFIG.databaseId,
-          APPWRITE_CONFIG.collections.JOB_REQUESTS,
-          id
-        )
+        // For example data, just remove from the state
+        const updatedRequests = requests.filter(r => r.$id !== id);
+        setRequests(updatedRequests);
+        setFilteredRequests(updatedRequests);
         
-        setRequests(prevRequests => 
-          prevRequests.filter(r => r.$id !== id)
-        )
+        // Reset to first page if we're on the last page and deleting the last item
+        const newTotalPages = Math.ceil(updatedRequests.length / itemsPerPage);
+        if (currentPage > newTotalPages && newTotalPages > 0) {
+          setCurrentPage(newTotalPages);
+        }
         
-        toast.success('Solicitação excluída com sucesso')
+        toast.success('Solicitação excluída com sucesso');
       } catch (error) {
-        console.error('Erro ao excluir solicitação:', error)
-        toast.error('Erro ao excluir solicitação')
+        console.error('Erro ao excluir solicitação:', error);
+        toast.error('Erro ao excluir solicitação');
       }
     }
   }

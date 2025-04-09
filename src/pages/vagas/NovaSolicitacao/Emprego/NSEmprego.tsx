@@ -6,6 +6,7 @@ import { ID } from 'appwrite'
 import { useAuth } from '../../../../contexts/AuthContext'
 import { CheckCircleIcon, PlusIcon, TrashIcon, CloudArrowUpIcon, ArrowPathIcon } from '@heroicons/react/24/outline'
 import './NSEmprego.module.css'
+import Swal from 'sweetalert2'
 
 // Interface para os dados da API do IBGE
 interface EstadoIBGE {
@@ -181,6 +182,11 @@ export default function SolicitacaoVagas() {
     fetchMunicipios()
   }, [formData.uf])
 
+  // Monitorar mudanças no estado vagaItems
+  useEffect(() => {
+    console.log('Estado vagaItems atualizado:', vagaItems);
+  }, [vagaItems]);
+
   const downloadModelo = () => {
     // URL do seu arquivo modelo
     const modeloUrl = '/modelos/Modelo_Solicitacao_Lista.xlsx'
@@ -335,14 +341,16 @@ export default function SolicitacaoVagas() {
       escolaridade: ''
     }
     
+    // Validar apenas os campos obrigatórios
     if (!formData.uf) newErrors.uf = 'UF é obrigatório'
     if (!formData.cidade) newErrors.cidade = 'Cidade é obrigatória'
     if (!formData.codigoIBGE) newErrors.codigoIBGE = 'Código IBGE é obrigatório'
     if (!formData.numeroVagas) newErrors.numeroVagas = 'Número de vagas é obrigatório'
     if (!formData.cargo) newErrors.cargo = 'Cargo é obrigatório'
-    if (!formData.bairro) newErrors.bairro = 'Bairro é obrigatório'
-    if (formData.pcd === undefined) newErrors.pcd = 'PCD é obrigatório'
-    if (!formData.escolaridade) newErrors.escolaridade = 'Escolaridade é obrigatória'
+    // Remover validações de campos opcionais
+    // if (!formData.bairro) newErrors.bairro = 'Bairro é obrigatório'
+    // if (formData.pcd === undefined) newErrors.pcd = 'PCD é obrigatório'
+    // if (!formData.escolaridade) newErrors.escolaridade = 'Escolaridade é obrigatória'
     
     setErrors(newErrors)
     return Object.values(newErrors).every(error => error === '')
@@ -360,7 +368,11 @@ export default function SolicitacaoVagas() {
   
   // Função para adicionar um item à lista
   const handleAddItem = () => {
+    console.log('Iniciando handleAddItem')
+    console.log('FormData atual:', formData)
+    
     if (validateForm()) {
+      console.log('Formulário válido, criando novo item')
       const newItem: VagaItem = {
         id: Date.now().toString(),
         uf: formData.uf,
@@ -377,7 +389,12 @@ export default function SolicitacaoVagas() {
         dataCriacao: new Date().toISOString()
       }
       
+      console.log('Novo item criado:', newItem)
+      console.log('Itens atuais:', vagaItems)
+      
       const updatedItems = [...vagaItems, newItem]
+      console.log('Lista atualizada:', updatedItems)
+      
       setVagaItems(updatedItems)
       localStorage.setItem('vagaItems', JSON.stringify(updatedItems))
       
@@ -399,6 +416,8 @@ export default function SolicitacaoVagas() {
       
       // Mostrar mensagem de sucesso
       toast.success('Vaga adicionada com sucesso!')
+    } else {
+      console.log('Formulário inválido, erros:', errors)
     }
   }
   
@@ -422,6 +441,9 @@ export default function SolicitacaoVagas() {
     
     // Atualizar o estado com a nova lista
     setVagaItems(updatedItems)
+    
+    // Salvar no localStorage
+    localStorage.setItem('vagaItems', JSON.stringify(updatedItems))
     
     toast.success('Item removido com sucesso!')
   }
@@ -527,6 +549,53 @@ export default function SolicitacaoVagas() {
     return mapeamento[escolaridade] || escolaridade
   }
 
+  const handleDelete = async (id: string) => {
+    console.log('Iniciando handleDelete para ID:', id);
+    
+    const result = await Swal.fire({
+      title: 'Tem certeza?',
+      text: "Você não poderá reverter esta ação!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Sim, excluir!',
+      cancelButtonText: 'Cancelar'
+    })
+
+    if (result.isConfirmed) {
+      try {
+        console.log('Confirmação recebida, removendo item');
+        // Remove the item from the local state
+        const updatedItems = vagaItems.filter(item => item.id !== id)
+        console.log('Itens após remoção:', updatedItems);
+        setVagaItems(updatedItems)
+        
+        // Salvar no localStorage
+        localStorage.setItem('vagaItems', JSON.stringify(updatedItems))
+        
+        // If the item is already saved in the database, delete it
+        if (id.startsWith('VAG')) {
+          // This is a local ID, not a database ID, so no need to delete from database
+          toast.success('Item removido com sucesso')
+        } else {
+          // This is a database ID, so delete from database
+          await databases.deleteDocument(
+            APPWRITE_CONFIG.databaseId,
+            APPWRITE_CONFIG.collections.VAGAS,
+            id
+          )
+          toast.success('Solicitação excluída com sucesso')
+        }
+      } catch (error) {
+        console.error('Erro ao excluir solicitação:', error)
+        toast.error('Erro ao excluir solicitação')
+      }
+    } else {
+      console.log('Operação cancelada pelo usuário');
+    }
+  }
+
   return (
     <div className="p-8">
       <div className="max-w-6xl mx-auto">
@@ -565,7 +634,13 @@ export default function SolicitacaoVagas() {
               01. Adicionar Vaga
             </h2>
 
-            <form className="space-y-6">
+            <form 
+              className="space-y-6"
+              onSubmit={(e) => {
+                e.preventDefault();
+                console.log('Formulário submetido, mas prevenindo comportamento padrão');
+              }}
+            >
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* UF */}
                 <div>
@@ -769,7 +844,10 @@ export default function SolicitacaoVagas() {
               <div className="flex justify-end">
                 <button
                   type="button"
-                  onClick={handleAddItem}
+                  onClick={() => {
+                    console.log('Botão Adicionar à Lista clicado');
+                    handleAddItem();
+                  }}
                   className="flex items-center px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-colors shadow-md hover:shadow-lg"
                 >
                   <PlusIcon className="w-5 h-5 mr-2" />
@@ -818,6 +896,8 @@ export default function SolicitacaoVagas() {
               </div>
             ) : (
               <div className="overflow-x-auto">
+                {/* Log para depuração */}
+                {(() => { console.log('Renderizando tabela com', vagaItems.length, 'itens'); return null; })()}
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
@@ -894,7 +974,10 @@ export default function SolicitacaoVagas() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <button
-                            onClick={() => handleRemoveItem(item.id)}
+                            onClick={() => {
+                              console.log('Botão de remoção clicado para item:', item.id);
+                              handleDelete(item.id);
+                            }}
                             className="text-red-600 hover:text-red-900"
                           >
                             <TrashIcon className="w-5 h-5" />
