@@ -39,14 +39,18 @@ export function StatusTimeline({ currentStatus }: StatusTimelineProps) {
                   <span
                     className={`h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white ${
                       status.id === currentStatus
-                        ? 'bg-blue-600'
+                        ? status.id === 12 ? 'bg-green-500' : 'bg-blue-600'
                         : status.id < currentStatus
                         ? 'bg-green-500'
                         : 'bg-gray-200'
                     }`}
                   >
                     {status.id === currentStatus ? (
-                      <ClockIcon className="h-5 w-5 text-white" aria-hidden="true" />
+                      status.id === 12 ? (
+                        <CheckCircleIcon className="h-5 w-5 text-white" aria-hidden="true" />
+                      ) : (
+                        <ClockIcon className="h-5 w-5 text-white" aria-hidden="true" />
+                      )
                     ) : status.id < currentStatus ? (
                       <CheckCircleIcon className="h-5 w-5 text-white" aria-hidden="true" />
                     ) : (
