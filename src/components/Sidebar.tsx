@@ -28,6 +28,8 @@ function Sidebar() {
   ]
   
   const vagasMenuItems: MenuItem[] = [
+    { type: 'title', label: 'Dashboard' },
+    { path: '/vagas/dashboard', icon: ChartBarIcon, label: 'Dashboard' },
     { type: 'title', label: 'Nova Solicitação' },
     { path: '/vagas/nova-solicitacao/capacitacao', icon: AcademicCapIcon, label: 'Capacitação' },
     { path: '/vagas/nova-solicitacao/empreendedorismo', icon: BuildingStorefrontIcon, label: 'Empreendedorismo' },

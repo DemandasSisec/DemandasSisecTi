@@ -18,6 +18,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import ListaUsuarios from './pages/comum/ListaUsuarios'
 import { AuthProvider } from './contexts/AuthContext'
 import Dashboard from './pages/comum/Dashboard/Dashboard'
+import DashboardVagas from './pages/vagas/Dashboard/Dashboard'
 import AppLayout from './components/AppLayout'
 import { Toaster } from 'react-hot-toast'
 import Login from './pages/comum/Login'
@@ -44,6 +45,7 @@ function App() {
                           <Route path="lista-usuarios" element={<ListaUsuarios />} />
                           <Route path="cadastrar-usuario" element={<CadastrarUsuario />} />
                           <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                          <Route path="vagas/dashboard" element={<DashboardVagas />} />
                           <Route path="vagas/cadastro-empresa" element={<CadastroEmpresa />} />
                           <Route path="demandas/painel-demandas" element={<PainelDemandas />} />
                           <Route path="demandas/nova-solicitacao" element={<NovaSolicitacao />} />
