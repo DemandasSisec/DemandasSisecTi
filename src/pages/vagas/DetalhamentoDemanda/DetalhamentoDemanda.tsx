@@ -27,7 +27,7 @@ const demandaMock = {
   cargo: "Desenvolvedor Full Stack",
   empresa: "TechCorp Solutions",
   created_at: "2024-04-02T14:30:00",
-  statusAtual: 1
+  statusAtual: 9
 }
 
 // Dados de exemplo para a tabela de preview

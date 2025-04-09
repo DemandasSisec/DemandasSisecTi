@@ -1,11 +1,11 @@
 // src/pages/Dashboard.tsx
 import { useState, useEffect } from 'react'
-import { databases } from '../../config/appwrite'
-import { APPWRITE_CONFIG } from '../../config/appwrite'
+import { databases } from '../../../config/appwrite'
+import { APPWRITE_CONFIG } from '../../../config/appwrite'
 import { Query } from 'appwrite'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../../contexts/AuthContext'
-import type { Solicitacao } from '../../types/appwrite'
+import { useAuth } from '../../../contexts/AuthContext'
+import type { Solicitacao } from '../../../types/appwrite'
 import {
   ChartBarIcon,
   ClipboardDocumentListIcon,
@@ -29,7 +29,8 @@ import {
   Legend
 } from 'recharts'
 import { Link } from 'react-router-dom'
-import type { DemandaPorResponsavel, DemandaPorMes, DemandaPorTipo } from '../types/appwrite'
+import type { DemandaPorResponsavel, DemandaPorMes, DemandaPorTipo } from '../../../types/appwrite'
+import styles from './Dashboard.module.css'
 
 export default function Dashboard() {
   const navigate = useNavigate()
@@ -283,143 +284,143 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white p-6 flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      <div className={styles.loadingContainer}>
+        <div className={styles.spinner}></div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        <header className="mb-8">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+    <div className={styles.container}>
+      <div className={styles.content}>
+        <header className={styles.header}>
+          <h1 className={styles.title}>
             Dashboard
           </h1>
-          <p className="mt-2 text-gray-600">
+          <p className={styles.subtitle}>
             Visão geral das demandas e métricas do sistema
           </p>
         </header>
         
         {/* Cards de Totais Gerais - Estilo atualizado */}
-        <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200 mb-8">
-          <div className="flex items-center gap-2 mb-6">
-            <ChartBarIcon className="w-6 h-6 text-blue-500" />
-            <h2 className="text-lg font-semibold text-gray-900">
+        <div className={styles.card}>
+          <div className={styles.cardHeader}>
+            <ChartBarIcon className={`${styles.icon} ${styles.iconBlue}`} />
+            <h2 className={styles.cardTitle}>
               Totais Gerais
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
-            <div className="p-4 rounded-lg bg-gray-50 border border-gray-200">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-600">Total de Demandas</span>
-                <ChartBarIcon className="w-5 h-5 text-blue-500" />
+          <div className={styles.statsGrid}>
+            <div className={styles.statCard}>
+              <div className={styles.statCardHeader}>
+                <span className={styles.statLabel}>Total de Demandas</span>
+                <ChartBarIcon className={`${styles.iconSmall} ${styles.iconBlue}`} />
               </div>
-              <p className="mt-2 text-2xl font-semibold text-gray-900">{stats.total}</p>
+              <p className={styles.statValue}>{stats.total}</p>
             </div>
 
-            <div className="p-4 rounded-lg bg-gray-50 border border-gray-200">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-600">Em Andamento</span>
-                <ClockIcon className="w-5 h-5 text-indigo-500" />
+            <div className={styles.statCard}>
+              <div className={styles.statCardHeader}>
+                <span className={styles.statLabel}>Em Andamento</span>
+                <ClockIcon className={`${styles.iconSmall} ${styles.iconIndigo}`} />
               </div>
-              <p className="mt-2 text-2xl font-semibold text-gray-900">{stats.emAndamento}</p>
+              <p className={styles.statValue}>{stats.emAndamento}</p>
             </div>
 
-            <div className="p-4 rounded-lg bg-gray-50 border border-gray-200">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-600">Pendentes</span>
-                <ClockIcon className="w-5 h-5 text-yellow-500" />
+            <div className={styles.statCard}>
+              <div className={styles.statCardHeader}>
+                <span className={styles.statLabel}>Pendentes</span>
+                <ClockIcon className={`${styles.iconSmall} ${styles.iconYellow}`} />
               </div>
-              <p className="mt-2 text-2xl font-semibold text-gray-900">{stats.pendentes}</p>
+              <p className={styles.statValue}>{stats.pendentes}</p>
             </div>
 
-            <div className="p-4 rounded-lg bg-gray-50 border border-gray-200">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-600">Concluídas</span>
-                <CheckCircleIcon className="w-5 h-5 text-green-500" />
+            <div className={styles.statCard}>
+              <div className={styles.statCardHeader}>
+                <span className={styles.statLabel}>Concluídas</span>
+                <CheckCircleIcon className={`${styles.iconSmall} ${styles.iconGreen}`} />
               </div>
-              <p className="mt-2 text-2xl font-semibold text-gray-900">{stats.concluidas}</p>
+              <p className={styles.statValue}>{stats.concluidas}</p>
             </div>
 
-            <div className="p-4 rounded-lg bg-gray-50 border border-gray-200">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-600">Suspensas</span>
-                <XCircleIcon className="w-5 h-5 text-red-500" />
+            <div className={styles.statCard}>
+              <div className={styles.statCardHeader}>
+                <span className={styles.statLabel}>Suspensas</span>
+                <XCircleIcon className={`${styles.iconSmall} ${styles.iconRed}`} />
               </div>
-              <p className="mt-2 text-2xl font-semibold text-gray-900">{estatisticas.suspensas}</p>
+              <p className={styles.statValue}>{estatisticas.suspensas}</p>
             </div>
           </div>
         </div>
 
         {/* Estatísticas por Responsável */}
-        <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200 mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-              <UserGroupIcon className="w-6 h-6 text-blue-500" />
-              <h2 className="text-lg font-semibold text-gray-900">
+        <div className={styles.card}>
+          <div className={styles.cardHeaderWithAction}>
+            <div className={styles.cardHeaderLeft}>
+              <UserGroupIcon className={`${styles.icon} ${styles.iconBlue}`} />
+              <h2 className={styles.cardTitle}>
                 Demandas por Responsável
               </h2>
             </div>
             <Link
               to="/painel-demandas"
-              className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className={styles.button}
             >
               Visão Detalhada
             </Link>
           </div>
           
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead>
+          <div className={styles.tableContainer}>
+            <table className={styles.table}>
+              <thead className={styles.tableHeader}>
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className={styles.tableHeaderCell}>
                     Responsável
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className={styles.tableHeaderCell}>
                     Total
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className={styles.tableHeaderCell}>
                     Pendentes
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className={styles.tableHeaderCell}>
                     Em Andamento
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className={styles.tableHeaderCell}>
                     Concluídas
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className={styles.tableHeaderCell}>
                     Suspensas
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody>
                 {demandasPorResponsavel.map((resp) => (
-                  <tr key={resp.responsavel} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <tr key={resp.responsavel} className={styles.tableRow}>
+                    <td className={`${styles.tableCell} ${styles.tableCellBold}`}>
                       {resp.responsavel}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className={styles.tableCell}>
                       {resp.total}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
+                    <td className={styles.tableCell}>
+                      <span className={`${styles.badge} ${styles.badgeYellow}`}>
                         {resp.pendentes}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                    <td className={styles.tableCell}>
+                      <span className={`${styles.badge} ${styles.badgeBlue}`}>
                         {resp.emAndamento}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                    <td className={styles.tableCell}>
+                      <span className={`${styles.badge} ${styles.badgeGreen}`}>
                         {resp.concluidas}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">
+                    <td className={styles.tableCell}>
+                      <span className={`${styles.badge} ${styles.badgeRed}`}>
                         {resp.suspensas}
                       </span>
                     </td>
@@ -431,16 +432,16 @@ export default function Dashboard() {
         </div>
 
         {/* Gráficos atualizados */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className={styles.chartsGrid}>
           {/* Gráfico de Barras */}
-          <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
-            <div className="flex items-center gap-2 mb-6">
-              <ChartBarIcon className="w-6 h-6 text-blue-500" />
-              <h2 className="text-lg font-semibold text-gray-900">
+          <div className={styles.card}>
+            <div className={styles.cardHeader}>
+              <ChartBarIcon className={`${styles.icon} ${styles.iconBlue}`} />
+              <h2 className={styles.cardTitle}>
                 Evolução de Demandas
               </h2>
             </div>
-            <div className="h-80">
+            <div className={styles.chartContainer}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={demandasPorMes}
@@ -510,14 +511,14 @@ export default function Dashboard() {
           </div>
 
           {/* Gráfico de Pizza */}
-          <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
-            <div className="flex items-center gap-2 mb-6">
-              <ChartBarIcon className="w-6 h-6 text-blue-500" />
-              <h2 className="text-lg font-semibold text-gray-900">
+          <div className={styles.card}>
+            <div className={styles.cardHeader}>
+              <ChartBarIcon className={`${styles.icon} ${styles.iconBlue}`} />
+              <h2 className={styles.cardTitle}>
                 Distribuição por Tipo
               </h2>
             </div>
-            <div className="h-80">
+            <div className={styles.chartContainer}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
